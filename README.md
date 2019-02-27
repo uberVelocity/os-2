@@ -1,6 +1,6 @@
 ## OS - Assignment 2
 ### Exercise 1 - Writing a shell
-#### Set of special characters: {<, >, |, &}
+#### Set of special characters: {<, >, |, &, "}
 Need a parser for the input.
 There are certain inputs which are possible.
 #### Parser construction
@@ -10,6 +10,7 @@ Create two buffers of sizes that correspond to the number of special
 characters / character strings and store the special characters and
 strings into the buffer. An abstract structure may be created in order
 to deal efficiently with the input.
+The character '"' should parse everything as a string until the next '"'.
 ##### Chain of operations
 1. Parse the input to check for valid expression.
 2. Parse buffers to execute the expression.
@@ -34,7 +35,8 @@ If no command name is provided:
 3. 
 
 #### Notes
-A potential function that deals with the creation of a file descriptor
+- A potential function that deals with the creation of a file descriptor
 between two processes might be useful since one does not know how many
 file descriptors shall be needed in advance. As such, each operation
 that needs a file descriptor shall create its own dynamically.
+- dup() used for handling the output / input from a file to a file
