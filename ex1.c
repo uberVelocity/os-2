@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 #define BUFFER_SIZE 1024
 #define TOK_BUFSIZE 64
@@ -70,10 +72,13 @@ void shLoop(void) {
 	char *line;
 	char **args;
 	int status;
-	
+	char shell_prompt[100];
+    // Configure readline to auto-complete paths when the tab key is hit.
+    rl_bind_key('\t', rl_complete);
 	do {
-		printf("> ");
-		line = readLine();
+		// printf("> ");
+		// line = readLine();
+		line = readline("> ");
 		args = splitLine(line);
 		status = execute(args);
 		
@@ -128,7 +133,7 @@ int launch(char **args) {
 			// Child process
 			if (execvp(args[0], args) == -1) {
 				perror("lsh");
-				exit(EXIT_FAILURE); // SHOULD BE MOVED 80
+				exit(EXIT_FAILURE);
 			}
 			else if (pid < 0) {
 				// Error forking
@@ -162,4 +167,5 @@ int main(int argc, char* argv[]) {
   	
 	shLoop();
 	
+	return EXIT_SUCCESS;
 }
