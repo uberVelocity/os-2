@@ -11,6 +11,7 @@ characters / character strings and store the special characters and
 strings into the buffer. An abstract structure may be created in order
 to deal efficiently with the input.
 The character '"' should parse everything as a string until the next '"'.
+##### getopt() built-in function in C - might be useful
 ##### Chain of operations
 1. Parse the input to check for valid expression.
 2. Parse buffers to execute the expression.
@@ -31,7 +32,8 @@ B should then be provided as input into A.
 If no filename is provided: "Invalid syntax!".
 2. [commandA] | [commandB] should create a new pipe between commandA
 and commandB. 
-If no command name is provided: ~something~
+If no command name is provided: ~something~.
+Pipes and input/output redirection [example #1](http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html), [example #2](https://www.unix.com/programming/122360-c-piping-redirect-operator.html)
 
 #### TODO:
 - [ ] Parse special characters
