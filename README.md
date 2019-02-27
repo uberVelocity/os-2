@@ -45,7 +45,7 @@ If no command name is provided: ~something~
 #### Remaining Extensions:
 - tab twice to show possibilities
 - provide [emacs shortcuts](https://en.wikipedia.org/wiki/GNU_Readline)
-- change environmental variables using export (can be used to implement [colors](https://www.cyberciti.biz/faq/bash-shell-change-the-color-of-my-shell-prompt-under-linux-or-unix/)
+- change environmental variables using export (can be used to implement [colors](https://www.cyberciti.biz/faq/bash-shell-change-the-color-of-my-shell-prompt-under-linux-or-unix/))
 #### Notes
 - A potential function that deals with the creation of a file descriptor
 between two processes might be useful since one does not know how many
