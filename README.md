@@ -1,6 +1,6 @@
 ## OS - Assignment 2
 ### Exercise 1 - Writing a shell
-#### Set of special characters: {<, >, |, &, "}
+#### Set of special characters: {<, >, |, &, ", \*?}
 Need a parser for the input.
 There are certain inputs which are possible.
 #### Parser construction
@@ -31,12 +31,30 @@ B should then be provided as input into A.
 If no filename is provided: "Invalid syntax!".
 2. [commandA] | [commandB] should create a new pipe between commandA
 and commandB. 
-If no command name is provided: 
-3. 
+If no command name is provided: ~something~
 
+#### TODO:
+- [ ] Parse special characters
+- [x] Execute regular commands
+- [x] Execute regular commands with multiple flags
+- [ ] Execute composed commands
+- [ ] Execute commands with special characters
+- [x] Implement cd/exit/help (extension)
+
+#### Remaining Extensions:
+- auto-complete with tab
+- tab twice to show possibilities
+- provide [emacs shortcuts](https://en.wikipedia.org/wiki/GNU_Readline)
 #### Notes
 - A potential function that deals with the creation of a file descriptor
 between two processes might be useful since one does not know how many
 file descriptors shall be needed in advance. As such, each operation
 that needs a file descriptor shall create its own dynamically.
 - dup() used for handling the output / input from a file to a file
+- redirection of input output happens before execute (and after fork?)
+- separate logic of parser from executions of functions
+- struct that represents input line; as soon as it hits newLine, execute that line
+it could have multiple commands and these commands could have multiple executions.
+- flex file?
+#### NMAP used in Assignment 2
+- producer and consumer
