@@ -40,11 +40,12 @@ If no command name is provided: ~something~
 - [ ] Execute composed commands
 - [ ] Execute commands with special characters
 - [x] Implement cd/exit/help (extension)
+- [x] Auto-complete path names with tab (extension - GNU Readline)
 
 #### Remaining Extensions:
-- auto-complete with tab
 - tab twice to show possibilities
 - provide [emacs shortcuts](https://en.wikipedia.org/wiki/GNU_Readline)
+- change environmental variables using export (can be used to implement [colors](https://www.cyberciti.biz/faq/bash-shell-change-the-color-of-my-shell-prompt-under-linux-or-unix/)
 #### Notes
 - A potential function that deals with the creation of a file descriptor
 between two processes might be useful since one does not know how many
