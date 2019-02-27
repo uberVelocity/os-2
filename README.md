@@ -57,5 +57,6 @@ that needs a file descriptor shall create its own dynamically.
 - struct that represents input line; as soon as it hits newLine, execute that line
 it could have multiple commands and these commands could have multiple executions.
 - flex file?
+- useful tutorial https://brennan.io/2015/01/16/write-a-shell-in-c/
 #### NMAP used in Assignment 2
 - producer and consumer
