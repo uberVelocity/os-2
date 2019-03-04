@@ -8,19 +8,60 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#define BUFFER_SIZE 1024
-#define TOK_BUFSIZE 64
-#define TOK_DELIM " \t\r\n\a"
+#include "ex1.h"
 
-int num_builtins(void);
-int sh_cd(char **args);
-int sh_help(char **args);
-int sh_exit(char **args);
-int launch(char**);
-int execute(char**);
-char **splitLine(char*);
-char *readLine(void);
-void shLoop(void);
+int isFile(char* filename) {
+	if (access(filename, F_OK ) != -1) {
+    return 1;
+  }
+	return 0;
+}
+
+int isSpecChar(char c) {
+		return ((c == '>') || (c == '<') || (c == '&') ||
+		(c == '|') || (c == '"'));
+}
+
+int isBuiltinCommand(char *string) {
+		if ((strcmp(string, "cd")) == 0 || (strcmp(string, "help") == 0) || (strcmp(string, "exit") == 0)) {
+			return 1;
+		}
+		return 0;
+}
+
+int isValidCommand(char* string) {
+		char *ps = getenv("PATH");
+		char *parse = strtok(ps,":");
+		char buffer[300][300];
+		int index = -1, i = 0;
+		printf("BUFFER = %s\n", buffer[0]);
+
+		while (parse != NULL) {
+				parse = strtok(NULL,":");
+				if (parse != NULL) {
+						strcpy(buffer[i], parse);
+						strcat(buffer[i],"/");
+						strcat(buffer[i], string);
+				}
+				i++;
+		}	
+		for(int j = 0; j < i - 1; j++) {
+				if (!access(buffer[j], X_OK)) {
+						index = j;
+				}
+		}
+		ps = 0;
+		parse = 0;
+		for (i = 0; i < 300; i++) {
+			for (int j = 0; j < 300; j++) {
+				buffer[i][j] = 0;
+			}
+		}
+		if (index == -1) {
+			return 0;
+	}
+	return 1;
+}
 
 char *builtin_str[] = {
 	"cd",
@@ -80,6 +121,7 @@ void shLoop(void) {
 		// line = readLine();
 		line = readline("> ");
 		args = splitLine(line);
+		goTokens(args);
 		status = execute(args);
 		
 		free(line);
@@ -94,6 +136,16 @@ char *readLine(void) {
 	return line;
 }
 
+void goTokens(char** tokens) {
+	int i = 0;
+	printf("Trying to parse tokens...\n");
+	while (tokens[i] != NULL) {
+		printf("token[%d] = %s\n", i, tokens[i]);
+		parseToken(tokens[i]);
+		i++;
+	}
+}
+
 char **splitLine(char* line) {
 	int bufSize = TOK_BUFSIZE, pos = 0;
 	char **tokens = calloc(bufSize, sizeof(char*));
@@ -106,23 +158,22 @@ char **splitLine(char* line) {
 	
 	token = strtok(line, TOK_DELIM);
 	while (token != NULL) {
-			tokens[pos] = token;
-			pos++;
-			
-			if (pos >= bufSize) {
-				bufSize += TOK_BUFSIZE;
-				tokens = realloc(tokens,bufSize * sizeof(char*));
-				if (!tokens) {
-					fprintf(stderr, "tokens: allocation error\n");
-					exit(EXIT_FAILURE);
-				}
+		tokens[pos] = token;
+		pos++;
+		
+		if (pos >= bufSize) {
+			bufSize += TOK_BUFSIZE;
+			tokens = realloc(tokens,bufSize * sizeof(char*));
+			if (!tokens) {
+				fprintf(stderr, "tokens: allocation error\n");
+				exit(EXIT_FAILURE);
 			}
-			
-			token = strtok(NULL, TOK_DELIM);
 		}
-		tokens[pos] = NULL;
-		return tokens;
+		token = strtok(NULL, TOK_DELIM);
 	}
+	tokens[pos] = NULL;
+	return tokens;
+}
 
 int launch(char **args) {
 		pid_t pid, wpid;
@@ -163,9 +214,59 @@ int execute(char **args) {
 	return launch(args);
 }
 
+void treatSpecChar(char sc) {
+	if (sc == '<')	printf("reading from rhs to lhs");
+	if (sc == '>')	printf("writing to rhs from lsh");
+	if (sc == '|')	printf("creating pipe with rhs argument");
+	if (sc == '"')	printf("quotation");
+	if (sc == '&')	printf("background process");
+}
+
+void treatValidCommand(char* command) {
+	printf("doing some stuff with command\n");
+}
+
+void treatFileCommand(char *file) {
+	printf("file shennanigans\n");
+}
+
+void parseToken(char* token) {
+	printf("Parsing token...\n");
+	printf("Token == %s\n", token);
+	if (isSpecChar(token[0])) {
+		treatSpecChar(token[0]);
+	}
+	if (isValidCommand(token)) {
+		treatValidCommand(token);
+	}
+	if (isFile(token)) {
+		treatFileCommand(token);
+	}
+}
+
+void checkValidCommand() {
+	char *command = readline("");
+	printf("command = %s\n", command);
+	if (isValidCommand(command)) {
+		printf("Valid command!\n");
+	}
+	else {
+		printf("Invalid command!\n");
+	}
+}
+
+void checkExistFile() {
+	char *filename = readline("");
+	printf("filename = %s\n", filename);
+	if (isFile(filename)) {
+		printf("Existing file!\n");
+	}
+	else {
+		printf("Non-existing file!\n");
+	}
+}
+
 int main(int argc, char* argv[]) {
-  	
 	shLoop();
-	
 	return EXIT_SUCCESS;
 }
