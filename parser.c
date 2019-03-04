@@ -35,8 +35,18 @@ int onlyMetacharacters(char *token) {
     return 1;
 }
 
+/**
+ * Valid when all arguments are non-empty, second argument is a meta-character and fourth argument is background
+ * character.
+ */ 
 int validC4(char **tokens) {
-
+    if (tokens[0][0] != '\0' && onlyMetacharacters(tokens[1]) && tokens[2][0] != '\0' && tokens[3][0] != '\0' &&
+    tokens[3][0] == '&') {
+        printf("C4 - [X]\n");
+        return 1;
+    }
+    printf("C4 - [ ]\n");
+    return 0;
 }
 
 /**
@@ -80,13 +90,13 @@ int validC1(char **tokens) {
     return 0;
 }
 
-// It checks if the command is valid.
-// In the future, if it is valid, run corresponding
-// action for CN, where N = {1, 2, 3, 4}.
+/**
+ * It checks if the command is valid.
+ * In the future, if it is valid, run corresponding
+ * action for CN, where N = {1, 2, 3, 4}.
+ */
 int validCommand(char **tokens) {
-    printf("in valid command!\n");
-    /*
-    if (validC4(tokens))  return 1;*/
+    if (validC4(tokens))  return 1;
     if (validC3(tokens))  return 1;
     if (validC2(tokens))  return 1;
     if (validC1(tokens))  return 1;
@@ -134,8 +144,7 @@ char **parseCommand(char **args){
     int i = 0;
     token_1 = calloc(BUFFER_SIZE, sizeof(char));
     assert(token_1 != NULL);
-    while (args[i] != NULL && args[i][0] != '<' && args[i][0] != '>' && args[i][0] != '&') {
-        printf("in loop with i = %d\n", i);
+    while (args[i] != NULL && args[i][0] != '<' && args[i][0] != '>' && args[i][0] != '&' && args[i][0] != '|') {
         strcat(token_1, args[i]);
         strcat(token_1, " ");
         i++;
@@ -186,12 +195,10 @@ char **parseCommand(char **args){
 }
 
 void loop() {
-
     char *line = readLine();
     char **args = splitLine(line);
     char ** tokens = parseCommand(args);
     validCommand(tokens);
-    
 }
 
 int main(int argc, char* argv[]) {
