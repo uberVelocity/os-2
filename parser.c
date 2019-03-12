@@ -455,8 +455,12 @@ int launch(char **args, int mode) {
         }
         char **tokens = calloc(i + 1, sizeof(char*));
         i = 0;
+        /**
+         * Bread and butter. Should be refactored into functions for lizibility and modularity.
+         * Test cases need to be thought of.
+         */
         while (args[i] != NULL) {
-            printf("i = %d\n", i);
+            // printf("i = %d\n", i);
             if (args[i][0] == '<') {
                 if (args[i + 1] != NULL && args[i + 2] != NULL && args[i + 2][0] == '>') {
                     in = open(args[i + 1], O_RDONLY);
@@ -471,21 +475,21 @@ int launch(char **args, int mode) {
                     dup2(in, 0);
                     close(in);
                     tokens[i] = NULL;
-                    printf("%s\n%s\n%s\n%s\n%s\n\n", args[0], args[1], args[2], args[3], args[4]);
-                    printf("%s\n%s\n%s\n%s\n%s\n", tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]);   
+                    // printf("%s\n%s\n%s\n%s\n%s\n\n", args[0], args[1], args[2], args[3], args[4]);
+                    // printf("%s\n%s\n%s\n%s\n%s\n", tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]);   
                     break;
                 }
                          
             }
             if (args[i][0] == '>') {
                 out = open(args[i + 1], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-                printf("args 2 = %s\n", args[2]);
+                // printf("args 2 = %s\n", args[2]);
                 dup2(out, 1);
                 close(out);
-                printf("FILE DESCRIPTOR NAME = %s\n", args[i + 1]);
+                // printf("FILE DESCRIPTOR NAME = %s\n", args[i + 1]);
                 tokens[i] = NULL;
-                printf("%s\n%s\n%s\n%s\n%s\n\n", args[0], args[1], args[2], args[3], args[4]);
-                printf("%s\n%s\n%s\n%s\n%s\n", tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]);   
+                // printf("%s\n%s\n%s\n%s\n%s\n\n", args[0], args[1], args[2], args[3], args[4]);
+                // printf("%s\n%s\n%s\n%s\n%s\n", tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]);   
                 break;         
             }
             tokens[i] = calloc(strlen(args[i]), sizeof(char));
@@ -508,7 +512,7 @@ int launch(char **args, int mode) {
             } while (!WIFEXITED(status) && !WIFSIGNALED(status));
         }
     }
-    printf("RETURNING 1\n");
+    // printf("RETURNING 1\n");
     return 1;
     
 }
@@ -556,12 +560,12 @@ void shLoop(void) {
         
         //tokens = parseCommand(args);
         // printf("COMP 0:%d\n", strcmp(tokens[0], args[0]));
-        printf("\n%s\n", args[0]);
+        // printf("\n%s\n", args[0]);
 
         // status = validCommand(args);
 
         status = execute(args);
-        printf("status = %d\n", status);
+        // printf("status = %d\n", status);
         // abort();
         free(line);
         free(args);
