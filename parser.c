@@ -217,17 +217,22 @@ int validC1(char **tokens) {
     return 1;
 }
 
-void launchC3(char **tokens) {
-    int i = 0;
+int launchC3(char **tokens) {
+    int i = 0, j = 0;
     while (tokens[i] != NULL) {
         if (strcmp(tokens[i], "<") == 0) {
-            char **args = calloc(i, sizeof(char*));
-            for (int j = 0; j < i; j++) {
-                args[j] = calloc(64, sizeof(char));
+            char **args = calloc(i + 1, sizeof(char*));
+            for (j = 0; j < i; j++) {
+                args[j] = calloc(strlen(tokens[j]), sizeof(char));
                 strcpy(args[j], tokens[j]);
+            }
+            args[i] = NULL;
+            for (j = 0; j < i; j++) {
+                printf("original = %s\n new = %s\n\n", tokens[j], args[j]);
             }
             int in, out, status;
             pid_t pid, wpid;
+            printf("TOKENS[I + 1] ==== %s\n", tokens[i + 1]);
             in = open(tokens[i + 1], O_RDONLY);
             dup2(in, 0);
             close(in);
@@ -245,6 +250,7 @@ void launchC3(char **tokens) {
                 else {
                     do {
                         wpid = waitpid(pid, &status, WUNTRACED);
+                        printf("WPID = %d\n", wpid);
                     } while (!WIFEXITED(status) && !WIFSIGNALED(status));
                 }
             }
@@ -265,19 +271,17 @@ void launchC3(char **tokens) {
 int validCommand(char **tokens) {
     printf("IN VALID COMMAND!");
     if (validC4(tokens)) {
-        //launchC4(tokens);
-        return 1;
+        // return launchC4(tokens);
     }
     if (validC3(tokens)) {
-        launchC3(tokens);
-        return 1;
+        return launchC3(tokens);
     }
 
     if (validC2(tokens)) {
         // launchC2(tokens);
         return 1;
     }
-    if (validC1(tokens))  return 0;
+    if (validC1(tokens))  return launch(tokens, REGULAR);
     printf("INVALID COMMAND!\n");
     return 0;
 }
@@ -456,6 +460,7 @@ int launch(char **args, int mode) {
         }
     }
     return 1;
+    
 }
 
 int execute(char **args) {
@@ -474,8 +479,8 @@ int execute(char **args) {
         }
     }
 
-    // validCommand(args);
-    return launch(args, REGULAR);
+    return validCommand(args);
+    // return launch(args, REGULAR);
 }
 
 
@@ -484,29 +489,29 @@ void shLoop(void) {
     char **args;
     char **tokenl1;
     char **tokenl2;
-	int status, launch;
+    int status = 1, launch;
+    // int looped = 0;
 	char shell_prompt[100];
     // Configure readline to auto-complete paths when the tab key is hit.
     rl_bind_key('\t', rl_complete);
 	do {
-		// printf("> ");
-		// line = readLine();
-        line = readline("> ");
+		printf("> ");
+        line = readLine();
+        // printf("> ");
+        // line = readline("");
+        
         // Use up arrow to retrieve command from history.
         if (line && *line) {
             add_history(line);
         }
+        
         args = splitLine(line);
-        launch = validCommand(args);
+        
         //tokens = parseCommand(args);
         // printf("COMP 0:%d\n", strcmp(tokens[0], args[0]));
         printf("\n%s\n", args[0]);
-        if (!launch) {
-            status = execute(args);
-            printf("! status = %d\n", status);           
-        }
-        status = 1;
-        printf("status = %d\n", status);
+        
+        status = execute(args);
 		free(line);
         free(args);
 	} while(status);
