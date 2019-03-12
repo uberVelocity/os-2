@@ -36,11 +36,12 @@ If no command name is provided: ~something~.
 Pipes and input/output redirection [example #1](http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html), [example #2](https://www.unix.com/programming/122360-c-piping-redirect-operator.html), [example #3](https://www.geeksforgeeks.org/making-linux-shell-c/)
 
 #### TODO:
-- [ ] Parse special characters
+- [X] Execute I/O redirection commands.
+- [X] Parse special characters
 - [x] Execute regular commands
 - [x] Execute regular commands with multiple flags
-- [ ] Execute composed commands
-- [ ] Execute commands with special characters
+- [X] Execute composed commands
+- [X] Execute commands with special characters
 - [x] Implement cd/exit/help (extension)
 - [x] Auto-complete path names with tab (extension - GNU Readline)
 
