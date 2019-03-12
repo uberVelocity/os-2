@@ -6,6 +6,7 @@
 #define PIPELINE 2
 #define REGULAR 3
 
+int hasSpecialCharacter(char **);
 int isValidCommand(char*);
 int isBuiltinCommand(char*);
 int isFile(char*);

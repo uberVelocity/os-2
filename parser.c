@@ -40,35 +40,34 @@ int num_builtins() {
 }
 
 int isValidCommand(char* string) {
-		char *ps = getenv("PATH");
-		char *parse = strtok(ps,":");
-		char buffer[300][300];
-		int index = -1, i = 0;
-		printf("BUFFER = %s\n", buffer[0]);
-
-		while (parse != NULL) {
-				parse = strtok(NULL,":");
-				if (parse != NULL) {
-						strcpy(buffer[i], parse);
-						strcat(buffer[i],"/");
-						strcat(buffer[i], string);
-				}
-				i++;
-		}	
-		for(int j = 0; j < i - 1; j++) {
-				if (!access(buffer[j], X_OK)) {
-						index = j;
-				}
-		}
-		ps = 0;
-		parse = 0;
-		for (i = 0; i < 300; i++) {
-			for (int j = 0; j < 300; j++) {
-				buffer[i][j] = 0;
-			}
-		}
-		if (index == -1) {
-			return 0;
+    char *ps = getenv("PATH");
+    char *parse = strtok(ps,":");
+    char buffer[300][300];
+    int index = -1, i = 0;
+    printf("BUFFER = %s\n", buffer[0]);
+    while (parse != NULL) {
+        parse = strtok(NULL,":");
+        if (parse != NULL) {
+                strcpy(buffer[i], parse);
+                strcat(buffer[i],"/");
+                strcat(buffer[i], string);
+        }
+        i++;
+    }	
+    for(int j = 0; j < i - 1; j++) {
+        if (!access(buffer[j], X_OK)) {
+                index = j;
+        }
+    }
+    ps = 0;
+    parse = 0;
+    for (i = 0; i < 300; i++) {
+        for (int j = 0; j < 300; j++) {
+            buffer[i][j] = 0;
+        }
+    }
+    if (index == -1) {
+        return 0;
 	}
 	return 1;
 }
@@ -138,13 +137,6 @@ int onlyMetacharacters(char *token) {
  * character.
  */ 
 int validC4(char **tokens) {
-    
-    if (tokens[0][0] != '\0' && onlyMetacharacters(tokens[1]) && 
-    tokens[2] != NULL && tokens[2][0] != '\0' && tokens[3] != NULL && tokens[3][0] != '\0' && tokens[3][0] == '&') {
-        printf("C4 - [X]\n");
-        return 1;
-    }
-    printf("C4 - [ ]\n");
     return 0;
 }
 
@@ -153,23 +145,26 @@ int validC4(char **tokens) {
  * second argument has only meta characters.
  */
 int validC3(char **tokens) {
-    printf("testing C3\n");
-    /*if (tokens[0][0] != '\0') printf("NOT ESCAPE CHAR\n");
-    if (onlyMetacharacters(tokens[1]))  printf("ONLY META CHARACTERS\n");
-    if (tokens[2] != NULL)  printf("TOKENS 2 NOT NULL\n");
-    if (tokens[3] == NULL)   printf("TOKENS 3 ESCAPE CHARACTER\n");*/
-    if (tokens[0][0] != '\0' && onlyMetacharacters(tokens[1]) && 
-    tokens[2] != NULL && tokens[3] == NULL) {
-        printf("C3 - [x]\n");
-        if (tokens[1][0] == '<') {
-            launch(tokens, INPUT);
+    printf("checking C3!\n");
+    int counter = 0;
+    if (tokens[0] == NULL) return 0;    
+    int i = 0;
+    while (tokens[i + 1] != NULL) {
+        if (tokens[i][1] == 0 && (tokens[i][0] == '<' || tokens[i][0] == '>' || tokens[i][0] == '|') && tokens[i-1] != NULL
+        && tokens[i-1][0] != '<' && tokens[i-1][0] != '>' && tokens[i-1][0] != '|' && tokens[i-1][0] != '&'
+        && tokens[i+1] != NULL
+        && tokens[i+1][0] != '<' && tokens[i+1][0] != '>' && tokens[i+1][0] != '|' && tokens[i+1][0] != '&') {
+            printf("TOKEN = %c\n", tokens[i][0]);
+            counter++;
         }
-        if (tokens[1][0] == '>') {
-            launch(tokens, OUTPUT);
-        }
-        if (tokens[1][0] == '|') {
-            launch(tokens, PIPELINE);
-        }
+        i++;
+    }
+    if (tokens[i][0] == '&') {
+        printf("C3 - [ ]\n");
+        return 0;
+    }
+    if (counter == 1) {
+        printf("C3 - [X]\n");
         return 1;
     }
     printf("C3 - [ ]\n");
@@ -181,33 +176,85 @@ int validC3(char **tokens) {
  * and tokens[2] and tokens[3] are empty.
  */
 int validC2(char **tokens) {
-    printf("testing C2\n");
-    if (tokens[0][0] != '\0' && tokens[1] != NULL && backgroundSymbol(tokens[1])) {
+    printf("checking C2!\n");
+    if (tokens[0] == NULL) return 0;
+    int i = 0;    
+    while (tokens[i + 1] != NULL) {
+        if (tokens[i][0] == '>' || tokens[i][0] == '<' || tokens[i][0] == '|') {
+            return 0;
+        }
+        i++;
+    }
+    if (tokens[i][0] == '&') {
         printf("C2 - [X]\n");
         return 1;
     }
-    printf("C2 - [ ]\n");        
+    printf("C2 - [ ]\n");
     return 0;
 }
 
-void debugToken(char *token) {
+int hasSpecialCharacter(char **tokens) {
     int i = 0;
-    while (token[i] != 0) {
-    } 
+    while (tokens[i] != NULL) {
+        if (tokens[i][0] == '>' || tokens[i][0] == '<' || tokens[i][0] == '|' || tokens[i][0] == '&') {
+            return 1;
+        }
+        i++;
+    }
+    return 0;
 }
 
 /**
  * Valid when everything except tokens[1] is empty.
  */
 int validC1(char **tokens) {
-    printf("testing C1\n");
-    if (tokens[0] != NULL && tokens[1] == NULL &&
-    tokens[2] == NULL && tokens[3] == NULL) {
-        printf("C1 - [X]\n");
-        return launch(tokens, REGULAR);
+    printf("checking C1!\n");
+    if (hasSpecialCharacter(tokens)) {
+        printf("C1 - [ ]\n");
+        return 0;
     }
-    printf("C1 - [ ]\n");    
-    return 0;
+    printf("C1 - [X]\n");
+    return 1;
+}
+
+void launchC3(char **tokens) {
+    int i = 0;
+    while (tokens[i] != NULL) {
+        if (strcmp(tokens[i], "<") == 0) {
+            char **args = calloc(i, sizeof(char*));
+            for (int j = 0; j < i; j++) {
+                args[j] = calloc(64, sizeof(char));
+                strcpy(args[j], tokens[j]);
+            }
+            int in, out, status;
+            pid_t pid, wpid;
+            in = open(tokens[i + 1], O_RDONLY);
+            dup2(in, 0);
+            close(in);
+            pid = fork();
+            if (pid == 0) {
+                // Child process
+                if (execvp(args[0], args) == -1) {
+                    perror("lsh");
+                    exit(EXIT_FAILURE);
+                }
+                else if (pid < 0) {
+                    // Error forking
+                    perror("lsh");
+                }
+                else {
+                    do {
+                        wpid = waitpid(pid, &status, WUNTRACED);
+                    } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+                }
+            }
+            for (int j = 0; j < i; j++) {
+                free(args[i]);
+            }
+            free(args);
+        }
+        i++;
+    }
 }
 
 /**
@@ -216,10 +263,21 @@ int validC1(char **tokens) {
  * action for CN, where N = {1, 2, 3, 4}.
  */
 int validCommand(char **tokens) {
-    if (validC4(tokens))  return 1;
-    if (validC3(tokens))  return 1;
-    if (validC2(tokens))  return 1;
-    if (validC1(tokens))  return 1;
+    printf("IN VALID COMMAND!");
+    if (validC4(tokens)) {
+        //launchC4(tokens);
+        return 1;
+    }
+    if (validC3(tokens)) {
+        launchC3(tokens);
+        return 1;
+    }
+
+    if (validC2(tokens)) {
+        // launchC2(tokens);
+        return 1;
+    }
+    if (validC1(tokens))  return 0;
     printf("INVALID COMMAND!\n");
     return 0;
 }
@@ -264,8 +322,6 @@ char **splitLine(char* line) {
  * Mode takes special symbol.
  * launchToken1 takes second argument until mode/background.
  */
-
-
 char **parseCommand2(char **args) {
     char **tokenlaunch1, **tokenlaunch2;
     int i = 0, j = 0;
@@ -298,7 +354,7 @@ char **parseCommand2(char **args) {
     }
 }
 
-/*
+
 char **parseCommand(char **args){
     char *token_1, *token_2, *token_3, *token_4;
     int i = 0;
@@ -366,27 +422,21 @@ char **parseCommand(char **args){
 
     return tokens;   
 }
-*/
+
 int launch(char **args, int mode) {
     pid_t pid, wpid;
     int status;
-    
-    if (mode == INPUT) {
-        int in, out;
-        in = open(args[2], O_RDONLY);
-        dup2(in, 0);
-        close(in);
-    }
-    if (mode == OUTPUT) {
-        int in, out;
-        out = open(args[2], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-        printf("args 2 = %s\n", args[2]);
-        dup2(out, 1);
-        close(out);
-    }
-    if (mode == PIPELINE) {
 
-    }
+    // if (mode == OUTPUT) {
+    //     int in, out;
+    //     out = open(args[2], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+    //     printf("args 2 = %s\n", args[2]);
+    //     dup2(out, 1);
+    //     close(out);
+    // }
+    // if (mode == PIPELINE) {
+
+    // }
 
     pid = fork();
     if (pid == 0) {
@@ -409,23 +459,23 @@ int launch(char **args, int mode) {
 }
 
 int execute(char **args) {
-int i;
+    int i;
 
-if (args[0] == NULL) {
-    return 1;
-}
-
-/**
- * Veify if input command is a builtin Linux command.
- */
-for (i = 0; i < num_builtins(); i++) {
-    if (strcmp(args[0], builtin_str[i]) == 0){
-        return (*builtin_func[i])(args);
+    if (args[0] == NULL) {
+        return 1;
     }
-}
 
-// validCommand(args);
-return launch(args, REGULAR);
+    /**
+     * Veify if input command is a builtin Linux command.
+     */
+    for (i = 0; i < num_builtins(); i++) {
+        if (strcmp(args[0], builtin_str[i]) == 0){
+            return (*builtin_func[i])(args);
+        }
+    }
+
+    // validCommand(args);
+    return launch(args, REGULAR);
 }
 
 
@@ -434,23 +484,31 @@ void shLoop(void) {
     char **args;
     char **tokenl1;
     char **tokenl2;
-	int status;
+	int status, launch;
 	char shell_prompt[100];
     // Configure readline to auto-complete paths when the tab key is hit.
     rl_bind_key('\t', rl_complete);
 	do {
 		// printf("> ");
 		// line = readLine();
-		line = readline("> ");
+        line = readline("> ");
+        // Use up arrow to retrieve command from history.
+        if (line && *line) {
+            add_history(line);
+        }
         args = splitLine(line);
-        parseCommand2(args);
+        launch = validCommand(args);
         //tokens = parseCommand(args);
         // printf("COMP 0:%d\n", strcmp(tokens[0], args[0]));
         printf("\n%s\n", args[0]);
-		status = execute(args);
-		
+        if (!launch) {
+            status = execute(args);
+            printf("! status = %d\n", status);           
+        }
+        status = 1;
+        printf("status = %d\n", status);
 		free(line);
-		free(args);
+        free(args);
 	} while(status);
 }
 
