@@ -221,6 +221,7 @@ int launchC3(char **tokens) {
     int i = 0, j = 0;
     while (tokens[i] != NULL) {
         if (strcmp(tokens[i], "<") == 0) {
+            launch(tokens, INPUT);
             char **args = calloc(i + 1, sizeof(char*));
             for (j = 0; j < i; j++) {
                 args[j] = calloc(strlen(tokens[j]), sizeof(char));
@@ -236,28 +237,29 @@ int launchC3(char **tokens) {
             in = open(tokens[i + 1], O_RDONLY);
             dup2(in, 0);
             close(in);
-            pid = fork();
-            if (pid == 0) {
-                // Child process
-                if (execvp(args[0], args) == -1) {
-                    perror("lsh");
-                    exit(EXIT_FAILURE);
-                }
-                else if (pid < 0) {
-                    // Error forking
-                    perror("lsh");
-                }
-                else {
-                    do {
-                        wpid = waitpid(pid, &status, WUNTRACED);
-                        printf("WPID = %d\n", wpid);
-                    } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-                }
-            }
-            for (int j = 0; j < i; j++) {
-                free(args[i]);
-            }
-            free(args);
+            execute(args);
+            // pid = fork();
+            // if (pid == 0) {
+            //     // Child process
+            //     if (execvp(args[0], args) == -1) {
+            //         perror("lsh");
+            //         exit(EXIT_FAILURE);
+            //     }
+            //     else if (pid < 0) {
+            //         // Error forking
+            //         perror("lsh");
+            //     }
+            //     else {
+            //         do {
+            //             wpid = waitpid(pid, &status, WUNTRACED);
+            //             printf("WPID = %d\n", wpid);
+            //         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+            //     }
+            // }
+            // for (int j = 0; j < i; j++) {
+            //     free(args[i]);
+            // }
+            // free(args);
         }
         i++;
     }
@@ -281,8 +283,10 @@ int validCommand(char **tokens) {
         // launchC2(tokens);
         return 1;
     }
-    if (validC1(tokens))  return launch(tokens, REGULAR);
-    printf("INVALID COMMAND!\n");
+    if (validC1(tokens)) {
+        if (tokens != NULL) launch(tokens, REGULAR);
+    }
+    // printf("INVALID COMMAND!\n");
     return 0;
 }
 
@@ -429,7 +433,9 @@ char **parseCommand(char **args){
 
 int launch(char **args, int mode) {
     pid_t pid, wpid;
-    int status;
+    int in, out, status, i = 0, j = 0;
+
+    
 
     // if (mode == OUTPUT) {
     //     int in, out;
@@ -444,8 +450,40 @@ int launch(char **args, int mode) {
 
     pid = fork();
     if (pid == 0) {
-        // Child process
-        if (execvp(args[0], args) == -1) {
+        while (args[i] != NULL) {
+            i++;
+        }
+        char **tokens = calloc(i + 1, sizeof(char*));
+        i = 0;
+        while (args[i] != NULL) {
+            printf("i = %d\n", i);
+            if (args[i][0] == '<') {
+                printf("FILE DESCRIPTOR NAME = %s\n", args[i + 1]);
+                in = open(args[i + 1], O_RDONLY);
+                dup2(in, 0);
+                close(in);
+                tokens[i] = NULL;
+                printf("%s\n%s\n%s\n%s\n%s\n\n", args[0], args[1], args[2], args[3], args[4]);
+                printf("%s\n%s\n%s\n%s\n%s\n", tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]);   
+                break;         
+            }
+            if (args[i][0] == '>') {
+                out = open(args[i + 1], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+                printf("args 2 = %s\n", args[2]);
+                dup2(out, 1);
+                close(out);
+                printf("FILE DESCRIPTOR NAME = %s\n", args[i + 1]);
+                tokens[i] = NULL;
+                printf("%s\n%s\n%s\n%s\n%s\n\n", args[0], args[1], args[2], args[3], args[4]);
+                printf("%s\n%s\n%s\n%s\n%s\n", tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]);   
+                break;         
+            }
+            tokens[i] = calloc(strlen(args[i]), sizeof(char));
+            strcpy(tokens[i], args[i]);
+            i++;
+        }
+        if (execvp(tokens[0], tokens) == -1) {
+            printf("SHOULD NOT PRINT THIS!\n");
             perror("lsh");
             exit(EXIT_FAILURE);
         }
@@ -454,11 +492,13 @@ int launch(char **args, int mode) {
             perror("lsh");
         }
         else {
+            wait(NULL);
             do {
                 wpid = waitpid(pid, &status, WUNTRACED);
             } while (!WIFEXITED(status) && !WIFSIGNALED(status));
         }
     }
+    printf("RETURNING 1\n");
     return 1;
     
 }
@@ -478,27 +518,24 @@ int execute(char **args) {
             return (*builtin_func[i])(args);
         }
     }
-
-    return validCommand(args);
-    // return launch(args, REGULAR);
+    return launch(args, REGULAR);
 }
 
 
 void shLoop(void) {
 	char *line;
     char **args;
-    char **tokenl1;
-    char **tokenl2;
-    int status = 1, launch;
-    // int looped = 0;
+    int status = 1;
+    int looped = 0;
 	char shell_prompt[100];
     // Configure readline to auto-complete paths when the tab key is hit.
-    rl_bind_key('\t', rl_complete);
+    // rl_bind_key('\t', rl_complete);
 	do {
-		printf("> ");
-        line = readLine();
-        // printf("> ");
-        // line = readline("");
+		// printf("> ");
+        // line = readLine();
+        line = NULL;
+        args = NULL;
+        line = readline("> ");
         
         // Use up arrow to retrieve command from history.
         if (line && *line) {
@@ -510,9 +547,13 @@ void shLoop(void) {
         //tokens = parseCommand(args);
         // printf("COMP 0:%d\n", strcmp(tokens[0], args[0]));
         printf("\n%s\n", args[0]);
-        
+
+        // status = validCommand(args);
+
         status = execute(args);
-		free(line);
+        printf("status = %d\n", status);
+        // abort();
+        free(line);
         free(args);
 	} while(status);
 }
@@ -525,5 +566,6 @@ void loop() {
 }
 
 int main(int argc, char* argv[]) {
+    setbuf(stdout, NULL);
     shLoop();
 }
