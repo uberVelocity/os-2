@@ -458,14 +458,24 @@ int launch(char **args, int mode) {
         while (args[i] != NULL) {
             printf("i = %d\n", i);
             if (args[i][0] == '<') {
-                printf("FILE DESCRIPTOR NAME = %s\n", args[i + 1]);
-                in = open(args[i + 1], O_RDONLY);
-                dup2(in, 0);
-                close(in);
-                tokens[i] = NULL;
-                printf("%s\n%s\n%s\n%s\n%s\n\n", args[0], args[1], args[2], args[3], args[4]);
-                printf("%s\n%s\n%s\n%s\n%s\n", tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]);   
-                break;         
+                if (args[i + 1] != NULL && args[i + 2] != NULL && args[i + 2][0] == '>') {
+                    in = open(args[i + 1], O_RDONLY);
+                    out = open(args[i + 3], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+                    dup2(in, 0);
+                    dup2(out, 1);
+                    close(in);
+                    close(out);
+                }
+                else {
+                    in = open(args[i + 1], O_RDONLY);
+                    dup2(in, 0);
+                    close(in);
+                    tokens[i] = NULL;
+                    printf("%s\n%s\n%s\n%s\n%s\n\n", args[0], args[1], args[2], args[3], args[4]);
+                    printf("%s\n%s\n%s\n%s\n%s\n", tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]);   
+                    break;
+                }
+                         
             }
             if (args[i][0] == '>') {
                 out = open(args[i + 1], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
