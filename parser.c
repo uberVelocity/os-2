@@ -506,7 +506,7 @@ int launch(char **args, int mode) {
             perror("lsh");
         }
         else {
-            wait(NULL);
+            // wait(NULL);
             do {
                 wpid = waitpid(pid, &status, WUNTRACED);
             } while (!WIFEXITED(status) && !WIFSIGNALED(status));
@@ -534,30 +534,56 @@ int execute(char **args) {
     }
     return launch(args, REGULAR);
 }
-
-
+/*
+char **pipeSep(char *line) {
+	char *pchar;
+	char *sepCmd[256];
+	pchar = strtok(line, "|");
+	int count = 0;
+	while (pch != NULL && count < 256) {
+      printf("%s\n", pch);
+      sepCmd[count] = pch;
+      printf("The value in this array value is: %s\n", sepCmd[count]);
+      pch = strtok (NULL, "|");
+      count++;
+  }
+  return sepCmd;
+}
+*/
 void shLoop(void) {
 	char *line;
+    char **sepArgs; // Arguments separated by pipe symbol '|'.
     char **args;
     int status = 1;
     int looped = 0;
 	char shell_prompt[100];
     // Configure readline to auto-complete paths when the tab key is hit.
-    // rl_bind_key('\t', rl_complete);
+    rl_bind_key('\t', rl_complete);
 	do {
 		// printf("> ");
         // line = readLine();
         line = NULL;
         args = NULL;
-        line = readline("> ");
-        
+        line = readline("");
+        //sepArgs = pipeSep(line);
         // Use up arrow to retrieve command from history.
         if (line && *line) {
             add_history(line);
         }
-        
-        args = splitLine(line);
-        
+        char *pchar;
+				char *sepCmd[256];
+				pchar = strtok(line, "|");
+				int count = 0;
+				while (pchar != NULL && count < 256) {
+						printf("%s\n", pchar);
+						sepCmd[count] = pchar;
+						printf("The value in this array value is: %s\n", sepCmd[count]);
+						pchar = strtok (NULL, "|");
+						count++;
+				}
+				// Useful to do per command. I/O redirection checking and background
+				// process checking should be done on this.
+        args = splitLine(line);	
         //tokens = parseCommand(args);
         // printf("COMP 0:%d\n", strcmp(tokens[0], args[0]));
         // printf("\n%s\n", args[0]);
