@@ -36,6 +36,7 @@ If no command name is provided: ~something~.
 Pipes and input/output redirection [example #1](http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html), [example #2](https://www.unix.com/programming/122360-c-piping-redirect-operator.html), [example #3](https://www.geeksforgeeks.org/making-linux-shell-c/)
 
 #### TODO:
+- [ ] When handling I/O, check if file exists before proceeding (leads to errors otherwise). Currently we detect files which are non-existent, but we do not handle them.
 - [X] Execute I/O redirection commands.
 - [X] Parse special characters
 - [x] Execute regular commands
