@@ -104,10 +104,14 @@ char **splitLine(char* line) {
         // Handle '"' character.
         if (token[0] == '"' && token[strlen(token) - 1] != '"') {
             int posp = pos;
-            while (token != NULL && token[strlen(token) - 1] != '"') {   
+            while (token != NULL && token[strlen(token) - 1] != '"') {
+                // First token and it has quotes.  
                 if (tokens[posp] == NULL) {
+                    strcpy(token, &token[1]);
+                    printf("COPIED TOKEN = %s\n", token);
                     tokens[posp] = strdup(token);
-                }         
+                }
+                // There have been other tokens, resize tokens at that position and concatenate the new one.
                 else {
                     tokens[posp] = realloc(tokens[posp], (strlen(tokens[posp]) + strlen(token) + 2) * sizeof(char));
                     strcat(tokens[posp], " ");
@@ -117,6 +121,7 @@ char **splitLine(char* line) {
                 if (token[strlen(token) - 1] == '"') {
                     tokens[posp] = realloc(tokens[posp], (strlen(tokens[posp]) + strlen(token) + 2) * sizeof(char));
                     strcat(tokens[posp], " ");
+                    token[strlen(token) - 1] = 0;
                     strcat(tokens[posp], token);
                     token = strtok(NULL, TOK_DELIM);
                 }
@@ -299,7 +304,7 @@ void shLoop(void) {
     // Configure readline to auto-complete paths when the tab key is hit.
     rl_bind_key('\t', rl_complete);
 	do {
-        printf("looped = %d\n", looped);
+        // printf("looped = %d\n", looped);
         line = NULL;
         args = NULL;
         line = readline("> ");
