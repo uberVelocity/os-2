@@ -133,46 +133,33 @@ char **splitLine(char* line) {
 		exit(EXIT_FAILURE);
 	}
     token = strtok(line, TOK_DELIM);
+    // Handle '"" character.
 	while (token != NULL) {
-        if (token[0] == '"') {
+        if (token[0] == '"' && token[strlen(token) - 1] != '"') {
             int posp = pos;
-            printf("posp = %d\n", posp);
             while (token != NULL && token[strlen(token) - 1] != '"') {   
-                printf("token = %s\n", token);           
-                printf("strlen = %d\n", strlen(token)); 
-                printf("before cat tokens[pos] = %s\n", tokens[posp]); 
                 if (tokens[posp] == NULL) {
-                    printf("tokens[posp] is NULL\n");
                     tokens[posp] = strdup(token);
-                }               
+                }         
                 else {
-                    tokens[posp] = realloc(tokens[posp], (strlen(tokens[posp]) + strlen(token) + 3) * sizeof(char));
+                    tokens[posp] = realloc(tokens[posp], (strlen(tokens[posp]) + strlen(token) + 2) * sizeof(char));
                     strcat(tokens[posp], " ");
                     strcat(tokens[posp], token);                    
                 }
-                printf("after cat tokens[posp] = %s\n", tokens[posp]);                
-                
-                pos++;
-                if (pos >= bufSize) {
-                    bufSize += TOK_BUFSIZE;
-                    tokens = realloc(tokens,bufSize * sizeof(char*));
-                    if (!tokens) {
-                        fprintf(stderr, "tokens: allocation error\n");
-                        exit(EXIT_FAILURE);
-                    }
-                }
                 token = strtok(NULL, TOK_DELIM);
-                printf("token after strtok = %s\n", token);
+                if (token[strlen(token) - 1] == '"') {
+                    tokens[posp] = realloc(tokens[posp], (strlen(tokens[posp]) + strlen(token) + 2) * sizeof(char));
+                    strcat(tokens[posp], " ");
+                    strcat(tokens[posp], token);
+                    token = strtok(NULL, TOK_DELIM);
+                }
                 if (token == NULL) {
-                    printf("TOKEN is null and should not while anymore\n");
+                    pos++;
                 }
             }
-            printf("I AM NULL");
         }
         else {
-            tokens[pos] = token;
-            printf("token = %s\n", token);
-            printf("strlen = %d\n", strlen(token));                             
+            tokens[pos] = token;                           
             pos++;
             if (pos >= bufSize) {
                 bufSize += TOK_BUFSIZE;
