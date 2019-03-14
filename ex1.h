@@ -5,6 +5,9 @@
 #define OUTPUT 1
 #define PIPELINE 2
 #define REGULAR 3
+#define BACKGROUND 4
+
+int MODE = REGULAR;
 
 int hasSpecialCharacter(char **);
 int isValidCommand(char*);
@@ -15,7 +18,7 @@ int num_builtins(void);
 int sh_cd(char **args);
 int sh_help(char **args);
 int sh_exit(char **args);
-int launch(char**,int);
+int launch(char**);
 int execute(char**);
 char **splitLine(char*);
 char *readLine(void);

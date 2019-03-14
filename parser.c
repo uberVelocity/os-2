@@ -100,8 +100,8 @@ char **splitLine(char* line) {
 		exit(EXIT_FAILURE);
 	}
     token = strtok(line, TOK_DELIM);
-    // Handle '"" character.
 	while (token != NULL) {
+        // Handle '"' character.
         if (token[0] == '"' && token[strlen(token) - 1] != '"') {
             int posp = pos;
             while (token != NULL && token[strlen(token) - 1] != '"') {   
@@ -126,15 +126,28 @@ char **splitLine(char* line) {
             }
         }
         else {
-            tokens[pos] = token;                           
-            pos++;
-            if (pos >= bufSize) {
-                bufSize += TOK_BUFSIZE;
-                tokens = realloc(tokens,bufSize * sizeof(char*));
-                if (!tokens) {
-                    fprintf(stderr, "tokens: allocation error\n");
-                    exit(EXIT_FAILURE);
+            if (strlen(token) > 1 && token[strlen(token) - 1] == '&') {
+                token[strlen(token) - 1] = 0;
+                tokens[pos] = token;
+                pos++;
+                tokens[pos] = NULL;
+                MODE = BACKGROUND;
+                return launch(tokens);
+            }
+            if (strcmp(token, "&") != 0) {
+                tokens[pos] = token;                           
+                pos++;
+                if (pos >= bufSize) {
+                    bufSize += TOK_BUFSIZE;
+                    tokens = realloc(tokens,bufSize * sizeof(char*));
+                    if (!tokens) {
+                        fprintf(stderr, "tokens: allocation error\n");
+                        exit(EXIT_FAILURE);
+                    }
                 }
+            }
+            else {
+                MODE = BACKGROUND;
             }
             token = strtok(NULL, TOK_DELIM);
         }
@@ -149,7 +162,7 @@ char **splitLine(char* line) {
 
 
 
-int launch(char **args, int mode) {
+int launch(char **args) {
     pid_t pid, wpid;
     int in, out, status, i = 0, j = 0;
 
@@ -214,12 +227,14 @@ int launch(char **args, int mode) {
             perror("lsh");
             exit(EXIT_FAILURE);
         }
-        else if (pid < 0) {
-            // Error forking
-            perror("lsh");
-        }
-        else {
-            // wait(NULL);
+    }
+    else if (pid < 0) {
+        // Error forking
+        perror("lsh");
+    }
+    else {
+        printf("MODE = %d\n", MODE);
+        if (MODE != BACKGROUND) {
             do {
                 wpid = waitpid(pid, &status, WUNTRACED);
             } while (!WIFEXITED(status) && !WIFSIGNALED(status));
@@ -245,7 +260,7 @@ int execute(char **args) {
             return (*builtin_func[i])(args);
         }
     }
-    return launch(args, REGULAR);
+    return launch(args);
 }
 /*
 char **pipeSep(char *line) {
@@ -273,42 +288,27 @@ void shLoop(void) {
     // Configure readline to auto-complete paths when the tab key is hit.
     rl_bind_key('\t', rl_complete);
 	do {
-		// printf("> ");
-        // line = readLine();
+        printf("looped = %d\n", looped);
         line = NULL;
         args = NULL;
         line = readline("> ");
-        //sepArgs = pipeSep(line);
         // Use up arrow to retrieve command from history.
         if (line && *line) {
             add_history(line);
         }
-        /*char *pchar;
-				char *sepCmd[256];
-				pchar = strtok(line, "|");
-				int count = 0;
-				while (pchar != NULL && count < 256) {
-						// printf("%s\n", pchar);
-						sepCmd[count] = pchar;
-						printf("The value in this array value is: %s\n", sepCmd[count]);
-						pchar = strtok (NULL, "|");
-						count++;
-				}*/
-				//if (count == 1) {
-					args = splitLine(line);
-					status = execute(args);
-				//}
-				//else if (count > 1) {
-				//	printf("Handling multiple commands...\n");
-				//}
-				//else {
-				//	printf("ERROR: should not have n = %d commands!\n", count);
-					//exit(EXIT_FAILURE);
-				//}
-        // printf("status = %d\n", status);
-        // abort();
+
+        args = splitLine(line);
+        // Background process has been launched, ignore execution.
+        if (args != 1) {
+            status = execute(args);
+            free(args);
+        }
+        else {
+            status = 1;
+        }
         free(line);
-        free(args);
+        MODE = REGULAR;
+        looped++;
 	} while(status);
 }
 
