@@ -3,6 +3,30 @@
 #### Set of special characters: {<, >, |, &, "}
 ### I/O redirection
 **Redirection only happens between 1 output and 1 input.**
+Redirection should be done in the launch phase of the program
+as in this assignment it is required to have only one potential
+file from which input can be received into the **first** argument
+of the input_line. As such, per input line, only one I/O redirection
+can be present.
+If a redirection of the form occurs:
+```bash
+a.out | b.out | c.out < in
+```
+the input of a.out is ```in```.
+If a redirection of the form occurs:
+```bash
+a.out | b.out < in | c.out > out
+```
+the input of ```a.out``` will be ```in``` and the final output will
+be in ```out```. 
+The logic is as follows:
+1. The input of ```a.out``` will be ```in```.
+2. ```a.out``` executes.
+3. The output of ```a.out``` will be given to ```b.out``` as input.
+4. ```b.out``` executes.
+5. The output of ```b.out``` is given to ```c.out``` as input.
+6. ```c.out``` executes.
+7. The output of ```c.out``` will be written in the ```out``` file.
 ### Parser construction
 Initial idea is to go through the input and create two buffers,
 one for special characters and one for strings of characters.

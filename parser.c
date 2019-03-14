@@ -14,7 +14,6 @@
 
 #include "ex1.h"
 
-
 char *builtin_str[] = {
 	"cd",
 	"help",
@@ -114,7 +113,8 @@ char **splitLine(char* line) {
 		fprintf(stderr, "tokbuf: allocation error\n");
 		exit(EXIT_FAILURE);
 	}
-  token = strtok(line, TOK_DELIM);
+    token = strtok(line, TOK_DELIM);
+    FIRST_ARG = token;
 	while (token != NULL) {
         // Handle '"' character.
         if (token[0] == '"' && token[strlen(token) - 1] != '"') {
@@ -144,39 +144,37 @@ char **splitLine(char* line) {
                 }
             }
         }
-        else {
-            // Handle background processes
-            if (token[strlen(token) - 1] == '&' || strcmp(token, "&") == 0) {
-								if (strcmp(token, "&") == 0)	printf("IN IF BECAUSE BACKGROUND\n");
-                token[strlen(token) - 1] = 0;
-                if (token != 0) {
-                    tokens[pos] = token;                    
-                }
-                pos++;
-                tokens[pos] = NULL;
-                MODE = BACKGROUND;
-                launch(tokens);
-                free(tokens);
-                tokens = calloc(bufSize, sizeof(char*));
-                pos = 0;
-                token = strtok(NULL, TOK_DELIM);
+        // Handle Background processes.
+        else if (token[strlen(token) - 1] == '&' || strcmp(token, "&") == 0) {
+            if (strcmp(token, "&") == 0)	printf("IN IF BECAUSE BACKGROUND\n");
+            token[strlen(token) - 1] = 0;
+            if (token != 0) {
+                tokens[pos] = token;                    
             }
-            // Handle normal tokens
-            if (token != NULL && strcmp(token, "&") != 0) {
-                MODE = REGULAR;
-                tokens[pos] = token;          
-                pos++;
-                if (pos >= bufSize) {
-                    bufSize += TOK_BUFSIZE;
-                    tokens = realloc(tokens,bufSize * sizeof(char*));
-                    if (!tokens) {
-                        fprintf(stderr, "tokens: allocation error\n");
-                        exit(EXIT_FAILURE);
-                    }
-                }
-            }
+            pos++;
+            tokens[pos] = NULL;
+            MODE = BACKGROUND;
+            launch(tokens);
+            free(tokens);
+            tokens = calloc(bufSize, sizeof(char*));
+            pos = 0;
             token = strtok(NULL, TOK_DELIM);
         }
+        // Handle normal processes.
+        else if (token != NULL && strcmp(token, "&") != 0) {
+            MODE = REGULAR;
+            tokens[pos] = token;          
+            pos++;
+            if (pos >= bufSize) {
+                bufSize += TOK_BUFSIZE;
+                tokens = realloc(tokens,bufSize * sizeof(char*));
+                if (!tokens) {
+                    fprintf(stderr, "tokens: allocation error\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        } 
+        token = strtok(NULL, TOK_DELIM);
     }
     tokens[pos] = NULL;
 	return tokens;
@@ -190,62 +188,8 @@ int launch(char **args) {
     int in, out, status, i = 0, j = 0;
     pid = fork();
     if (pid == 0) {
-        while (args[i] != NULL) {
-            i++;
-        }
-        char **tokens = calloc(i + 2, sizeof(char*));
-        i = 0;
-        /**
-         * Bread and butter. Should be refactored into functions for lizibility and modularity.
-         * Test cases need to be thought of.
-         */
-        while (args[i] != NULL) {
-            if (args[i][0] == '<') {
-                if (args[i + 1] != NULL && args[i + 2] != NULL && args[i + 2][0] == '>') {
-                    if (isFile(args[i + 1]) && isFile(args[i + 3])) {
-											in = open(args[i + 1], O_RDONLY);
-											out = open(args[i + 3], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-											dup2(in, 0);
-											dup2(out, 1);
-											close(in);
-											close(out);
-										}
-                    else {
-                        printf("--- FILES DO NOT EXIST ---\n");
-                        break;
-                    }
-                }
-                else {
-									if (isFile(args[i + 1])) {
-												in = open(args[i + 1], O_RDONLY);
-												printf("in = %d\n", in);
-                        dup2(in, 0);
-                        close(in);
-                        tokens[i] = NULL;
-                        break;
-                    }
-                    else {
-                        printf("--- FILES DO NOT EXIST ---\n");
-                        break;
-                    }
-                    
-                }
-                         
-            }
-            if (args[i][0] == '>') {
-                out = open(args[i + 1], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-                dup2(out, 1);
-                close(out);
-                tokens[i] = NULL;
-                break;  
-								
-            }
-            tokens[i] = calloc(strlen(args[i]), sizeof(char));
-            strcpy(tokens[i], args[i]);
-            i++;
-        }
-        if (execvp(tokens[0], tokens) == -1) {
-            printf("Command %s not found!\n", tokens[0]);
+        if (execvp(args[0], args) == -1) {
+            printf("Command %s not found!\n", args[0]);
             exit(EXIT_FAILURE);
         }
     }
@@ -277,7 +221,6 @@ int execute(char **args) {
      */
     for (i = 0; i < num_builtins(); i++) {
         if (strcmp(args[0], builtin_str[i]) == 0){
-					printf("BUILT IN!\n");
             return (*builtin_func[i])(args);
         }
     }
@@ -303,12 +246,12 @@ char **pipeSep(char *line) {
 
 void shLoop(void) {
     init();
-		char *line;
+    char *line;
     char **sepArgs; // Arguments separated by pipe symbol '|'.
     char **args;
     int status = 1;
     int looped = 0;
-		char shell_prompt[100];
+    char shell_prompt[100];
     // Configure readline to auto-complete paths when the tab key is hit.
     rl_bind_key('\t', rl_complete);
 	do {
