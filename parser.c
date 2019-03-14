@@ -39,39 +39,6 @@ int num_builtins() {
 	return sizeof(builtin_str) / sizeof(char *);
 }
 
-int isValidCommand(char* string) {
-    char *ps = getenv("PATH");
-    char *parse = strtok(ps,":");
-    char buffer[300][300];
-    int index = -1, i = 0;
-    printf("BUFFER = %s\n", buffer[0]);
-    while (parse != NULL) {
-        parse = strtok(NULL,":");
-        if (parse != NULL) {
-                strcpy(buffer[i], parse);
-                strcat(buffer[i],"/");
-                strcat(buffer[i], string);
-        }
-        i++;
-    }	
-    for(int j = 0; j < i - 1; j++) {
-        if (!access(buffer[j], X_OK)) {
-                index = j;
-        }
-    }
-    ps = 0;
-    parse = 0;
-    for (i = 0; i < 300; i++) {
-        for (int j = 0; j < 300; j++) {
-            buffer[i][j] = 0;
-        }
-    }
-    if (index == -1) {
-        return 0;
-	}
-	return 1;
-}
-
 int (*builtin_func[]) (char **) = {
 	&sh_cd,
 	sh_help,
@@ -203,36 +170,36 @@ int launch(char **args, int mode) {
                     in = open(args[i + 1], O_RDONLY);
                     out = open(args[i + 3], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
                     if (in != -1 && out != -1) {
-											dup2(in, 0);
-											dup2(out, 1);
-											close(in);
-											close(out);
-										}
-										else {
-											printf("--- FILES DO NOT EXIST ---\n");
-											break;
-										}
+                        dup2(in, 0);
+                        dup2(out, 1);
+                        close(in);
+                        close(out);
+                    }
+                    else {
+                        printf("--- FILES DO NOT EXIST ---\n");
+                        break;
+                    }
                 }
                 else {
                     in = open(args[i + 1], O_RDONLY);
                     printf("in = %d\n", in);
                     if (in != -1) {
-											dup2(in, 0);
-											close(in);
-											tokens[i] = NULL;
-											break;
-										}
-										else {
-											printf("--- FILES DO NOT EXIST ---\n");
-											break;
-										}
+                        dup2(in, 0);
+                        close(in);
+                        tokens[i] = NULL;
+                        break;
+                    }
+                    else {
+                        printf("--- FILES DO NOT EXIST ---\n");
+                        break;
+                    }
                     
                 }
                          
             }
             if (args[i][0] == '>') {
                 out = open(args[i + 1], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-								dup2(out, 1);
+                dup2(out, 1);
                 close(out);
                 tokens[i] = NULL;
                 break;  
