@@ -41,7 +41,7 @@ As an example, consider the command:
 ```bash
 echo "some string <> with 'special' characters"
 ```
-The command above will simply print on the screen ```"some string <> with 'special' characters"```.
+The command above will be tokenized into two tokens: ```echo``` and ```"some string <> with 'special' characters"``` It will print on the screen ```"some string <> with 'special' characters"```.
 Certain commands require the quotes to remain in the token, while others do not.
 Example: <br/>
 ```bash
