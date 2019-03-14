@@ -42,7 +42,7 @@ As an example, consider the command:
 echo "some string <> with 'special' characters"
 ```
 The command above will be tokenized into two tokens: ```echo``` and ```"some string <> with 'special' characters"``` It will print on the screen ```"some string <> with 'special' characters"```.
-Certain commands require the quotes to remain in the token, while others do not.
+The trick is to take everything between the quotes as one argument of the command.
 Example: <br/>
 ```bash
 git commit -m "this is a message"
@@ -55,7 +55,7 @@ In this scenario, bash uses the quotes to logically group and evaluate the value
 ```bash
 cat some\ file\ that's\ on\ the\ computer
 ```
-This is currently not supported by the shell.
+This is also supported by the shell as it takes as parameters to the command (```args[0] = cat, args[1] = some file that's on the computer```. Whatever ```cat``` chooses to do with the command (transform it into ```cat some\ file\ that's\ on\ the\ computer```) is up to it.
 - [X] Implement background processes. Background processes are now possible within the shell by specifying the special character ```&```.
 ```bash
 xeyes &
