@@ -47,7 +47,7 @@ Example: <br/>
 ```bash
 git commit -m "this is a message"
 ```
-The git command will require the quotes to remain in the execution parameters of the command in order for git to parse the contents within the quotes as the body of the message.
+This command is supported by the shell. The git command will require the quotes to remain in the execution parameters of the command in order for git to parse the contents within the quotes as the body of the message.
 ```bash
 cat "some file that's on the computer"
 ```
