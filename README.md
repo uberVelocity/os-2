@@ -56,15 +56,16 @@ In this scenario, bash uses the quotes to logically group and evaluate the value
 cat some\ file\ that's\ on\ the\ computer
 ```
 This is currently not supported by the shell.
-- [X] Implement background processes. Background processes are now possible within the shell by specifying the special character ```&``` as a token (so not stuck to another token - this will be implemented shortly).
+- [X] Implement background processes. Background processes are now possible within the shell by specifying the special character ```&```.
 ```bash
 xeyes &
 ```
-is a valid command and will start the process in background; while
+is a valid command and will start the process in background.
 ```bash
 xeyes&
 ```
-will not start a background process, the command will be invalid.
+will also start a background process.
+- [ ] Make sure to clean after defunct processes.
 - [ ] When handling I/O, check if file exists before proceeding (leads to errors otherwise). Currently we detect files which are non-existent, but we do not handle them.
 - [X] Execute I/O redirection commands.
 - [X] Parse special characters
