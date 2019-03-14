@@ -59,7 +59,7 @@ int sh_cd(char **args) {
 
 int sh_help(char **args) {
 	int i;
-	printf("Mihai Popescu's LSH\n");
+	printf("Mihai Popescu's and Alex Scurtu's LSH\n");
 	printf("Type program names and arguments, and hit enter.\n");
 	printf("The following are built in:\n");
 	
@@ -114,7 +114,7 @@ char **splitLine(char* line) {
 		fprintf(stderr, "tokbuf: allocation error\n");
 		exit(EXIT_FAILURE);
 	}
-    token = strtok(line, TOK_DELIM);
+  token = strtok(line, TOK_DELIM);
 	while (token != NULL) {
         // Handle '"' character.
         if (token[0] == '"' && token[strlen(token) - 1] != '"') {
@@ -147,6 +147,7 @@ char **splitLine(char* line) {
         else {
             // Handle background processes
             if (token[strlen(token) - 1] == '&' || strcmp(token, "&") == 0) {
+								if (strcmp(token, "&") == 0)	printf("IN IF BECAUSE BACKGROUND\n");
                 token[strlen(token) - 1] = 0;
                 if (token != 0) {
                     tokens[pos] = token;                    
@@ -187,13 +188,12 @@ char **splitLine(char* line) {
 int launch(char **args) {
     pid_t pid, wpid;
     int in, out, status, i = 0, j = 0;
-
     pid = fork();
     if (pid == 0) {
         while (args[i] != NULL) {
             i++;
         }
-        char **tokens = calloc(i + 1, sizeof(char*));
+        char **tokens = calloc(i + 2, sizeof(char*));
         i = 0;
         /**
          * Bread and butter. Should be refactored into functions for lizibility and modularity.
@@ -202,23 +202,23 @@ int launch(char **args) {
         while (args[i] != NULL) {
             if (args[i][0] == '<') {
                 if (args[i + 1] != NULL && args[i + 2] != NULL && args[i + 2][0] == '>') {
-                    in = open(args[i + 1], O_RDONLY);
-                    out = open(args[i + 3], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-                    if (in != -1 && out != -1) {
-                        dup2(in, 0);
-                        dup2(out, 1);
-                        close(in);
-                        close(out);
-                    }
+                    if (isFile(args[i + 1]) && isFile(args[i + 3])) {
+											in = open(args[i + 1], O_RDONLY);
+											out = open(args[i + 3], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+											dup2(in, 0);
+											dup2(out, 1);
+											close(in);
+											close(out);
+										}
                     else {
                         printf("--- FILES DO NOT EXIST ---\n");
                         break;
                     }
                 }
                 else {
-                    in = open(args[i + 1], O_RDONLY);
-                    printf("in = %d\n", in);
-                    if (in != -1) {
+									if (isFile(args[i + 1])) {
+												in = open(args[i + 1], O_RDONLY);
+												printf("in = %d\n", in);
                         dup2(in, 0);
                         close(in);
                         tokens[i] = NULL;
@@ -245,8 +245,7 @@ int launch(char **args) {
             i++;
         }
         if (execvp(tokens[0], tokens) == -1) {
-            printf("SHOULD NOT PRINT THIS!\n");
-            perror("lsh");
+            printf("Command %s not found!\n", tokens[0]);
             exit(EXIT_FAILURE);
         }
     }
@@ -278,11 +277,13 @@ int execute(char **args) {
      */
     for (i = 0; i < num_builtins(); i++) {
         if (strcmp(args[0], builtin_str[i]) == 0){
+					printf("BUILT IN!\n");
             return (*builtin_func[i])(args);
         }
     }
     return launch(args);
 }
+
 /*
 char **pipeSep(char *line) {
 	char *pchar;
@@ -299,14 +300,15 @@ char **pipeSep(char *line) {
   return sepCmd;
 }
 */
+
 void shLoop(void) {
     init();
-	char *line;
+		char *line;
     char **sepArgs; // Arguments separated by pipe symbol '|'.
     char **args;
     int status = 1;
     int looped = 0;
-	char shell_prompt[100];
+		char shell_prompt[100];
     // Configure readline to auto-complete paths when the tab key is hit.
     rl_bind_key('\t', rl_complete);
 	do {
