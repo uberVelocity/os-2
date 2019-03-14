@@ -36,6 +36,26 @@ If no command name is provided: ~something~.
 Pipes and input/output redirection [example #1](http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html), [example #2](https://www.unix.com/programming/122360-c-piping-redirect-operator.html), [example #3](https://www.geeksforgeeks.org/making-linux-shell-c/)
 
 #### TODO:
+- [X] Add special character '"' functionality: Functionality has been added and now commands including quotes are parsed appropriately.
+As an example, consider the command:
+```bash
+echo "some string <> with 'special' characters"
+```
+The command above will simply print on the screen ```"some string <> with 'special' characters"```.
+Certain commands require the quotes to remain in the token, while others do not.
+Example: <br/>
+```bash
+git commit -m "this is a message"
+```
+The git command will require the quotes to remain in the execution parameters of the command in order for git to parse the contents within the quotes as the body of the message.
+```bash
+cat "some file that's on the computer"
+```
+In this scenario, bash uses the quotes to logically group and evaluate the values of each variable between the quotes. Functionality-wise, it transforms the command into
+```bash
+cat some\ file\ that's\ on\ the\ computer
+```
+This is currently not supported by the shell.
 - [ ] When handling I/O, check if file exists before proceeding (leads to errors otherwise). Currently we detect files which are non-existent, but we do not handle them.
 - [X] Execute I/O redirection commands.
 - [X] Parse special characters
