@@ -1,6 +1,8 @@
 ## OS - Assignment 2
 ### Exercise 1 - Writing a shell
-#### Set of special characters: {<, >, |, &, ", \*?}
+#### Set of special characters: {<, >, |, &, "}
+#### I/O redirection
+**Redirection only happens between 1 output and 1 input.**
 Need a parser for the input.
 There are certain inputs which are possible.
 #### Parser construction
