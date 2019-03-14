@@ -60,7 +60,7 @@ This is also supported by the shell as it takes as parameters to the command (``
 ```bash
 xeyes &
 ```
-is a valid command and will start the process in background.
+is a valid command and will start the process in background (**NEEDS FIXIN'**).
 ```bash
 xeyes&
 ```
