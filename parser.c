@@ -90,6 +90,21 @@ char *strdup (const char *s) {
     return d;
 }
 
+void init() {
+    printf("\n");
+    printf("*     SHELL - CORP - 1.0      *\n");
+    printf("*     -------------------     *\n");
+    printf("*                             *\n");
+    printf("*                             *\n");
+    printf("*    AUTHORS: Mihai Popescu   *\n");
+    printf("*             Andrei Scurtu   *\n");
+    printf("\n\n");
+}
+
+void x2rectangle() {
+    printf("\n*****************\n*\t\t*\n*\t\t*\n*\t\t*\n*****************\n");
+}
+
 char **splitLine(char* line) {
 	int bufSize = TOK_BUFSIZE, pos = 0;
 	char **tokens = calloc(bufSize, sizeof(char*));
@@ -108,7 +123,6 @@ char **splitLine(char* line) {
                 // First token and it has quotes.  
                 if (tokens[posp] == NULL) {
                     strcpy(token, &token[1]);
-                    printf("COPIED TOKEN = %s\n", token);
                     tokens[posp] = strdup(token);
                 }
                 // There have been other tokens, resize tokens at that position and concatenate the new one.
@@ -133,12 +147,10 @@ char **splitLine(char* line) {
         else {
             // Handle background processes
             if (token[strlen(token) - 1] == '&' || strcmp(token, "&") == 0) {
-                printf("!!!token = %s\n", token);
                 token[strlen(token) - 1] = 0;
                 if (token != 0) {
                     tokens[pos] = token;                    
                 }
-                printf("tokens[%d][0] = %d\n", pos, tokens[pos][0]);
                 pos++;
                 tokens[pos] = NULL;
                 MODE = BACKGROUND;
@@ -147,13 +159,11 @@ char **splitLine(char* line) {
                 tokens = calloc(bufSize, sizeof(char*));
                 pos = 0;
                 token = strtok(NULL, TOK_DELIM);
-                printf("token = %s\n", token);
             }
             // Handle normal tokens
             if (token != NULL && strcmp(token, "&") != 0) {
                 MODE = REGULAR;
                 tokens[pos] = token;          
-                printf("tokens[%d] = %s\n", pos, tokens[pos]);
                 pos++;
                 if (pos >= bufSize) {
                     bufSize += TOK_BUFSIZE;
@@ -167,11 +177,7 @@ char **splitLine(char* line) {
             token = strtok(NULL, TOK_DELIM);
         }
     }
-    printf("pos = %d\n", pos);
     tokens[pos] = NULL;
-    for (int i = 0; i < pos; i++) {
-        printf("tokens[%d] = %s\n", i, tokens[i]);
-    }
 	return tokens;
 }
 
@@ -249,7 +255,6 @@ int launch(char **args) {
         perror("lsh");
     }
     else {
-        printf("MODE = %d\n", MODE);
         if (MODE != BACKGROUND) {
             do {
                 wpid = waitpid(pid, &status, WUNTRACED);
@@ -295,6 +300,7 @@ char **pipeSep(char *line) {
 }
 */
 void shLoop(void) {
+    init();
 	char *line;
     char **sepArgs; // Arguments separated by pipe symbol '|'.
     char **args;
