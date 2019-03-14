@@ -126,16 +126,29 @@ char **splitLine(char* line) {
             }
         }
         else {
-            if (strlen(token) > 1 && token[strlen(token) - 1] == '&') {
+            // Handle background processes
+            if (token[strlen(token) - 1] == '&' || strcmp(token, "&") == 0) {
+                printf("!!!token = %s\n", token);
                 token[strlen(token) - 1] = 0;
-                tokens[pos] = token;
+                if (token != 0) {
+                    tokens[pos] = token;                    
+                }
+                printf("tokens[%d][0] = %d\n", pos, tokens[pos][0]);
                 pos++;
                 tokens[pos] = NULL;
                 MODE = BACKGROUND;
-                return launch(tokens);
+                launch(tokens);
+                free(tokens);
+                tokens = calloc(bufSize, sizeof(char*));
+                pos = 0;
+                token = strtok(NULL, TOK_DELIM);
+                printf("token = %s\n", token);
             }
-            if (strcmp(token, "&") != 0) {
-                tokens[pos] = token;                           
+            // Handle normal tokens
+            if (token != NULL && strcmp(token, "&") != 0) {
+                MODE = REGULAR;
+                tokens[pos] = token;          
+                printf("tokens[%d] = %s\n", pos, tokens[pos]);
                 pos++;
                 if (pos >= bufSize) {
                     bufSize += TOK_BUFSIZE;
@@ -146,12 +159,10 @@ char **splitLine(char* line) {
                     }
                 }
             }
-            else {
-                MODE = BACKGROUND;
-            }
             token = strtok(NULL, TOK_DELIM);
         }
-	}
+    }
+    printf("pos = %d\n", pos);
     tokens[pos] = NULL;
     for (int i = 0; i < pos; i++) {
         printf("tokens[%d] = %s\n", i, tokens[i]);
@@ -299,13 +310,10 @@ void shLoop(void) {
 
         args = splitLine(line);
         // Background process has been launched, ignore execution.
-        if (args != 1) {
-            status = execute(args);
-            free(args);
-        }
-        else {
-            status = 1;
-        }
+
+        status = execute(args);
+        free(args);
+
         free(line);
         MODE = REGULAR;
         looped++;
