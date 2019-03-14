@@ -116,6 +116,13 @@ char *readLine(void) {
 	return line;
 }
 
+char *strdup (const char *s) {
+    char *d = malloc (strlen(s) + 1);
+    if (d == NULL)  return NULL;
+    strcpy(d,s);
+    return d;
+}
+
 char **splitLine(char* line) {
 	int bufSize = TOK_BUFSIZE, pos = 0;
 	char **tokens = calloc(bufSize, sizeof(char*));
@@ -125,22 +132,63 @@ char **splitLine(char* line) {
 		fprintf(stderr, "tokbuf: allocation error\n");
 		exit(EXIT_FAILURE);
 	}
-	token = strtok(line, TOK_DELIM);
+    token = strtok(line, TOK_DELIM);
 	while (token != NULL) {
-		tokens[pos] = token;
-		// printf("token = %s\n", token);		
-		pos++;
-		if (pos >= bufSize) {
-			bufSize += TOK_BUFSIZE;
-			tokens = realloc(tokens,bufSize * sizeof(char*));
-			if (!tokens) {
-				fprintf(stderr, "tokens: allocation error\n");
-				exit(EXIT_FAILURE);
-			}
-		}
-		token = strtok(NULL, TOK_DELIM);
+        if (token[0] == '"') {
+            int posp = pos;
+            printf("posp = %d\n", posp);
+            while (token != NULL && token[strlen(token) - 1] != '"') {   
+                printf("token = %s\n", token);           
+                printf("strlen = %d\n", strlen(token)); 
+                printf("before cat tokens[pos] = %s\n", tokens[posp]); 
+                if (tokens[posp] == NULL) {
+                    printf("tokens[posp] is NULL\n");
+                    tokens[posp] = strdup(token);
+                }               
+                else {
+                    tokens[posp] = realloc(tokens[posp], (strlen(tokens[posp]) + strlen(token) + 3) * sizeof(char));
+                    strcat(tokens[posp], " ");
+                    strcat(tokens[posp], token);                    
+                }
+                printf("after cat tokens[posp] = %s\n", tokens[posp]);                
+                
+                pos++;
+                if (pos >= bufSize) {
+                    bufSize += TOK_BUFSIZE;
+                    tokens = realloc(tokens,bufSize * sizeof(char*));
+                    if (!tokens) {
+                        fprintf(stderr, "tokens: allocation error\n");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                token = strtok(NULL, TOK_DELIM);
+                printf("token after strtok = %s\n", token);
+                if (token == NULL) {
+                    printf("TOKEN is null and should not while anymore\n");
+                }
+            }
+            printf("I AM NULL");
+        }
+        else {
+            tokens[pos] = token;
+            printf("token = %s\n", token);
+            printf("strlen = %d\n", strlen(token));                             
+            pos++;
+            if (pos >= bufSize) {
+                bufSize += TOK_BUFSIZE;
+                tokens = realloc(tokens,bufSize * sizeof(char*));
+                if (!tokens) {
+                    fprintf(stderr, "tokens: allocation error\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            token = strtok(NULL, TOK_DELIM);
+        }
 	}
-	tokens[pos] = NULL;
+    tokens[pos] = NULL;
+    for (int i = 0; i < pos; i++) {
+        printf("tokens[%d] = %s\n", i, tokens[i]);
+    }
 	return tokens;
 }
 
