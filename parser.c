@@ -14,6 +14,8 @@
 
 #include "ex1.h"
 
+
+
 char *builtin_str[] = {
 	"cd",
 	"help",
@@ -153,7 +155,8 @@ char **splitLine(char* line) {
             pos++;
             tokens[pos] = NULL;
             MODE = BACKGROUND;
-            launch(tokens);
+            // REMOVE NULLS - HAVE TO HANDLE THIS DIFFERENTLY ANYWAY
+            launch(tokens, NULL, NULL);
             free(tokens);
             tokens = calloc(bufSize, sizeof(char*));
             pos = 0;
@@ -179,22 +182,21 @@ char **splitLine(char* line) {
 	return tokens;
 }
 
-int validInputLine(char **inputLine) {
+int validInputLine(char **inputLine, char **inputFilename, char **outputFilename) {
     // Check for final character being arrow.
     // Check that after arrow I have a name.
     int ioProblem = 0, i = 0, pipeProblem = 0, sameInOut = 0;
-    char *inputFilename, *outputFilename;
     while (inputLine[i] != NULL) {
         if (inputLine[i] != NULL && (strcmp(inputLine[i], "<") == 0 || strcmp(inputLine[i], ">") == 0)) {
             i++;
             if (inputLine[i] == NULL || (inputLine[i] != NULL && !isalnum(inputLine[i][0]))) {                
                 ioProblem = 1;
             }
-            if (inputLine[i] != NULL && isalnum(inputLine[i][0]) && strcmp(inputLine[i-1], "<")) {
-                inputFilename = strdup(inputLine[i]);
+            if (inputLine[i] != NULL && isalnum(inputLine[i][0]) && strcmp(inputLine[i-1], "<") == 0) {
+                inputFilename[0] = strdup(inputLine[i]);
             }
-            if (inputLine[i] != NULL && isalnum(inputLine[i][0]) && strcmp(inputLine[i-1], ">")) {
-                outputFilename = strdup(inputLine[i]);
+            if (inputLine[i] != NULL && isalnum(inputLine[i][0]) && strcmp(inputLine[i-1], ">") == 0) {
+                outputFilename[0] = strdup(inputLine[i]);
             }
         }
         if (inputLine[i] != NULL && strcmp(inputLine[i], "|") == 0) {
@@ -207,9 +209,11 @@ int validInputLine(char **inputLine) {
             printf("Invalid syntax!\n");
             return 0;   
         }
-        if (inputFilename != NULL && outputFilename != NULL && strcmp(inputFilename, outputFilename) == 0) {
-            printf("Same input and output files!\n");
+        if (inputFilename[0] != NULL && outputFilename[0] != NULL) {
+            if (strcmp(inputFilename[0], outputFilename[0]) == 0) {
+            printf("### Same input and output files! ###\n");
             return 0;
+            } 
         }
         i++;
     }
@@ -217,11 +221,36 @@ int validInputLine(char **inputLine) {
 }
 
 
-int launch(char **args) {
+/**
+ * Another function is required since this will do the input output for 
+ * the current executed command, whereas input should only be done for 
+ * the first command and output should only be done for the last command. 
+ */
+int launch(char **args, char *inputFilename, char *outputFilename) {
     pid_t pid, wpid;
     int in, out, status, i = 0, j = 0;
     pid = fork();
     if (pid == 0) {
+        printf("in:%s\nout:%s\n", inputFilename, outputFilename);
+        if (inputFilename != NULL && outputFilename != NULL) {
+            // VERIFY THAT THEY EXIST!
+            in = open(inputFilename, O_RDONLY);
+            out = open(outputFilename, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+            dup2(in, 0);
+            dup2(out, 1);
+            close(in);
+            close(out);
+        }
+        else if (inputFilename != NULL && outputFilename == NULL) {
+            in = open(inputFilename, O_RDONLY);
+            dup2(in, 0);
+            close(in);
+        }
+        else if (inputFilename == NULL && outputFilename != NULL) {
+            out = open(outputFilename, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+            dup2(out, 1);
+            close(out);
+        }
         if (execvp(args[0], args) == -1) {
             printf("Command %s not found!\n", args[0]);
             exit(EXIT_FAILURE);
@@ -242,7 +271,7 @@ int launch(char **args) {
     return 1;
 }
 
-int execute(char **args) {
+int execute(char **args, char *inputFilename, char *outputFilename) {
     int i;
 
     if (args[0] == NULL) {
@@ -257,7 +286,7 @@ int execute(char **args) {
             return (*builtin_func[i])(args);
         }
     }
-    return launch(args);
+    return launch(args, inputFilename, outputFilename);
 }
 
 /*
@@ -284,10 +313,10 @@ void shLoop(void) {
     char **args;
     int status = 1;
     int looped = 0;
-    char shell_prompt[100];
     // Configure readline to auto-complete paths when the tab key is hit.
     rl_bind_key('\t', rl_complete);
 	do {
+        char *inputFilename = 0, *outputFilename = 0;        
         // printf("looped = %d\n", looped);
         line = NULL;
         args = NULL;
@@ -298,8 +327,8 @@ void shLoop(void) {
         }
         args = splitLine(line);
         // Background process has been launched, ignore execution.
-        if (validInputLine(args)) {
-            status = execute(args);       
+        if (validInputLine(args, &inputFilename, &outputFilename)) {
+            status = execute(args, inputFilename, outputFilename);
         }
         free(args);
         free(line);

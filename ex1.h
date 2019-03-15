@@ -6,6 +6,7 @@
 #define PIPELINE 2
 #define REGULAR 3
 #define BACKGROUND 4
+#define IO 5
 
 int MODE = REGULAR;
 
@@ -18,8 +19,8 @@ int num_builtins(void);
 int sh_cd(char **args);
 int sh_help(char **args);
 int sh_exit(char **args);
-int launch(char**);
-int execute(char**);
+int launch(char**, char*, char*);
+int execute(char**, char*, char*);
 char **splitLine(char*);
 char *readLine(void);
 void shLoop(void);
