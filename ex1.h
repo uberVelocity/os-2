@@ -1,3 +1,15 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <assert.h>
+#include <sys/wait.h>
+#include <readline/readline.h>
+#include <readline/history.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #define BUFFER_SIZE 1024
 #define TOK_BUFSIZE 64
 #define TOK_DELIM " \t\r\n\a"

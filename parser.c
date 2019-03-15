@@ -114,7 +114,6 @@ char **splitLine(char* line) {
 		exit(EXIT_FAILURE);
 	}
     token = strtok(line, TOK_DELIM);
-    FIRST_ARG = token;
 	while (token != NULL) {
         // Handle '"' character.
         if (token[0] == '"' && token[strlen(token) - 1] != '"') {
@@ -180,13 +179,9 @@ char **splitLine(char* line) {
 	return tokens;
 }
 
-
-
-
 int launch(char **args) {
     pid_t pid, wpid;
     int in, out, status, i = 0, j = 0;
-    pid = fork();
     if (pid == 0) {
         if (execvp(args[0], args) == -1) {
             printf("Command %s not found!\n", args[0]);
@@ -244,14 +239,33 @@ char **pipeSep(char *line) {
 }
 */
 
+void separateCommands(char *line, char **separatedCommands, int *numCommands) {
+    char *commandSeparator = strtok(line, "|");
+    while (commandSeparator != NULL && *numCommands < 256) {
+        // printf("%s\n", commandSeparator);
+        separatedCommands[*numCommands] = commandSeparator;
+        printf("separatedCommands[%d] = %s\n", *numCommands, separatedCommands[*numCommands]);
+        commandSeparator = strtok(NULL, "|");
+        *numCommands = *numCommands + 1;
+        printf("infunctionnumber: %d\n", *numCommands);
+    }
+}
+
 void shLoop(void) {
     init();
+    int pid, wpid;
     char *line;
     char **sepArgs; // Arguments separated by pipe symbol '|'.
     char **args;
-    int status = 1;
+    int status = 1, numCommands = 0, i = 0;
     int looped = 0;
-    char shell_prompt[100];
+    char *backgroundSeparator;
+    char **bgSepCommands;
+    char *commandSeparator;
+    char *separatedCommands[256];
+    char *inputOutputNames[2];
+    int fd[256][2];
+    int k = 0;
     // Configure readline to auto-complete paths when the tab key is hit.
     rl_bind_key('\t', rl_complete);
 	do {
@@ -263,16 +277,26 @@ void shLoop(void) {
         if (line && *line) {
             add_history(line);
         }
-
+        // separateCommands(line, separatedCommands, &numCommands);
+        // for (i = 0; i < numCommands; i++) {
+            
+        // }
+        /*
+        bgSepCommands = calloc(numCommands, sizeof(char*));
+        for (i = 0; i < numCommands; i++) {
+            backgroundSeparator = strtok(separatedCommands[i], "&");
+            bgSepCommands[i] = backgroundSeparator;
+        }*/
+        
         args = splitLine(line);
-        // Background process has been launched, ignore execution.
-
         status = execute(args);
-        free(args);
 
+        free(args);
         free(line);
         MODE = REGULAR;
-        looped++;
+        numCommands = 0;
+        
+        looped++; // Debug variable.
 	} while(status);
 }
 
