@@ -117,6 +117,7 @@ char **splitLine(char* line) {
 	}
     token = strtok(line, TOK_DELIM);
 	while (token != NULL) {
+        
         // Handle '"' character.
         if (token[0] == '"' && token[strlen(token) - 1] != '"') {
             int posp = pos;
@@ -326,6 +327,11 @@ void shLoop(void) {
             add_history(line);
         }
         args = splitLine(line);
+        int i = 0;
+        while (args[i] != NULL) {
+            printf("token[%d] = %s\n", i, args[i]);
+            i++;
+        }
         // Background process has been launched, ignore execution.
         if (validInputLine(args, &inputFilename, &outputFilename)) {
             status = execute(args, inputFilename, outputFilename);
