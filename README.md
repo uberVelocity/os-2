@@ -89,6 +89,8 @@ is a valid command and will start the process in background (**NEEDS FIXIN'**).
 xeyes&
 ```
 will also start a background process.
+- [ ] Make a dynamic holder for commands (currently size = 256).
+- [ ] Make ```ls``` display colors depending on folder/file/executable.
 - [ ] Make sure to clean after defunct processes.
 - [ ] When handling I/O, check if file exists before proceeding (leads to errors otherwise). Currently we detect files which are non-existent, but we do not handle them.
 - [X] Execute I/O redirection commands.

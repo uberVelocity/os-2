@@ -114,7 +114,6 @@ char **splitLine(char* line) {
 		exit(EXIT_FAILURE);
 	}
     token = strtok(line, TOK_DELIM);
-    FIRST_ARG = token;
 	while (token != NULL) {
         // Handle '"' character.
         if (token[0] == '"' && token[strlen(token) - 1] != '"') {
@@ -180,7 +179,42 @@ char **splitLine(char* line) {
 	return tokens;
 }
 
-
+int validInputLine(char **inputLine) {
+    // Check for final character being arrow.
+    // Check that after arrow I have a name.
+    int ioProblem = 0, i = 0, pipeProblem = 0, sameInOut = 0;
+    char *inputFilename, *outputFilename;
+    while (inputLine[i] != NULL) {
+        if (inputLine[i] != NULL && (strcmp(inputLine[i], "<") == 0 || strcmp(inputLine[i], ">") == 0)) {
+            i++;
+            if (inputLine[i] == NULL || (inputLine[i] != NULL && !isalnum(inputLine[i][0]))) {                
+                ioProblem = 1;
+            }
+            if (inputLine[i] != NULL && isalnum(inputLine[i][0]) && strcmp(inputLine[i-1], "<")) {
+                inputFilename = strdup(inputLine[i]);
+            }
+            if (inputLine[i] != NULL && isalnum(inputLine[i][0]) && strcmp(inputLine[i-1], ">")) {
+                outputFilename = strdup(inputLine[i]);
+            }
+        }
+        if (inputLine[i] != NULL && strcmp(inputLine[i], "|") == 0) {
+            i++;
+            if (inputLine[i] == NULL || (inputLine[i] != NULL && !isalnum(inputLine[i][0]))) {
+                pipeProblem = 1;
+            }
+        }
+        if (ioProblem || pipeProblem) {
+            printf("Invalid syntax!\n");
+            return 0;   
+        }
+        if (inputFilename != NULL && outputFilename != NULL && strcmp(inputFilename, outputFilename) == 0) {
+            printf("Same input and output files!\n");
+            return 0;
+        }
+        i++;
+    }
+    return 1;
+}
 
 
 int launch(char **args) {
@@ -206,7 +240,6 @@ int launch(char **args) {
     }
     // printf("RETURNING 1\n");
     return 1;
-    
 }
 
 int execute(char **args) {
@@ -263,13 +296,12 @@ void shLoop(void) {
         if (line && *line) {
             add_history(line);
         }
-
         args = splitLine(line);
         // Background process has been launched, ignore execution.
-
-        status = execute(args);
+        if (validInputLine(args)) {
+            status = execute(args);       
+        }
         free(args);
-
         free(line);
         MODE = REGULAR;
         looped++;
