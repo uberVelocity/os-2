@@ -229,10 +229,22 @@ int validInputLine(char **inputLine, char **inputFilename, char **outputFilename
  */
 int launch(char **args, char *inputFilename, char *outputFilename) {
     pid_t pid, wpid;
-    int in, out, status, i = 0, j = 0;
+    int in, out, status, i = 0, j = 0, stop = 0;
     pid = fork();
     if (pid == 0) {
-        printf("in:%s\nout:%s\n", inputFilename, outputFilename);
+        printf("\nin:%s\nout:%s\n", inputFilename, outputFilename);
+        while (args[i] != NULL) {
+            printf("args[%d] = %s\n", i, args[i]);
+            if (strcmp(args[i], "<") == 0 || strcmp(args[i], ">") == 0) {
+                printf("ENCOUNTERED REDIRECTION!\n");
+                stop = 1;
+            }
+            if (stop)   args[i] = NULL;
+            else {
+                i++;
+            }
+        }
+        
         if (inputFilename != NULL && outputFilename != NULL) {
             // VERIFY THAT THEY EXIST!
             in = open(inputFilename, O_RDONLY);

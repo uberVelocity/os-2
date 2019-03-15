@@ -107,6 +107,7 @@ will also start a background process.
 - provide [emacs shortcuts](https://en.wikipedia.org/wiki/GNU_Readline)
 - change environmental variables using export (can be used to implement [colors](https://www.cyberciti.biz/faq/bash-shell-change-the-color-of-my-shell-prompt-under-linux-or-unix/))
 ### Notes
+- Interestingly enough, grep does not work.
 - A potential function that deals with the creation of a file descriptor
 between two processes might be useful since one does not know how many
 file descriptors shall be needed in advance. As such, each operation
