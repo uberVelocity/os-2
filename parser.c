@@ -141,7 +141,7 @@ char **splitLine(char* line) {
                     strcat(tokens[posp], token);                    
                 }
                 token = strtok(NULL, TOK_DELIM);
-                if (token[strlen(token) - 1] == '"') {
+                if (token != NULL && token[strlen(token) - 1] == '"') {
                     tokens[posp] = realloc(tokens[posp], (strlen(tokens[posp]) + strlen(token) + 2) * sizeof(char));
                     strcat(tokens[posp], " ");
                     token[strlen(token) - 1] = 0;
@@ -229,6 +229,15 @@ int validInputLine(char **inputLine, char **inputFilename, char **outputFilename
     return 1;
 }
 
+void remove_all_chars(char* str, char c) {
+    char *pr = str, *pw = str;
+    while (*pr) {
+        *pw = *pr++;
+        pw += (*pw != c);
+    }
+    *pw = '\0';
+}
+
 char* replace_char(char* str, char find, char replace){
     char *current_pos = strchr(str,find);
     while (current_pos){
@@ -245,7 +254,8 @@ char* replace_char(char* str, char find, char replace){
  */
 int launch(char **args, char *inputFilename, char *outputFilename) {
     pid_t pid, wpid;
-    int in, out, status, i = 0, j = 0, stop = 0;
+    char str1[10];
+    int in, out, status, i = 0, j = 0, k = 0;
     char **pargs = calloc(TOK_BUFSIZE, sizeof(char*));
     pid = fork();
     if (pid == 0) {
@@ -260,21 +270,17 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
 								i+= 2;
 						}
 				}
-				// pargs[i -j + 1] = NULL;
-				i = 0;
-				int k = 1;
-				while (pargs[i] != NULL) {
-					for (j = 0; j < strlen(pargs[i] - 1); j++) {
-								if (pargs[i][j] == '"') {
-									for (k = j+1; k < strlen(pargs[i] - 1); k++) {
-										pargs[i][j] = pargs[i][k];
-									}
-								}
-						}
-					
-					printf("pargs after dup and clean string: %s\n", pargs[i]);
-					i++;
+				// Remove quotes from argument
+				while (pargs[k] != NULL) {
+					// printf("BEFORE pargs%d = %s\n", k, pargs[k]);
+					remove_all_chars(pargs[k], '"');
+					// printf("AFTER pargs%d = %s\n", k, pargs[k]);
+					k++;
 				}
+				
+				
+				
+				
 				
         // Could potentially fix background prosesses with & separated.
         /*while (args[i] != NULL) {
@@ -304,7 +310,7 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
             close(out);
         }
         if (execvp(pargs[0], pargs) == -1) {
-            printf("Error: command not found!\n");// , args[0]);
+            printf("Error: %s command not found!\n" , pargs[0]);
             exit(EXIT_FAILURE);
         }
     }
