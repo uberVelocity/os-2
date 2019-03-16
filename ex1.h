@@ -6,6 +6,7 @@
 #define PIPELINE 2
 #define REGULAR 3
 #define BACKGROUND 4
+#define IO 5
 
 int MODE = REGULAR;
 
@@ -18,8 +19,8 @@ int num_builtins(void);
 int sh_cd(char **args);
 int sh_help(char **args);
 int sh_exit(char **args);
-int launch(char**);
-int execute(char**);
+int launch(char**, char*, char*);
+int execute(char**, char*, char*);
 char **splitLine(char*);
 char *readLine(void);
 void shLoop(void);
@@ -28,3 +29,58 @@ void treatFileCommand(char*);
 void treatSpecChar(char);
 void treatValidCommand(char*);
 void goTokens(char**);
+/*
+* Bread and butter. Should be refactored into functions for lizibility and modularity.
+* Test cases need to be thought of.
+*/
+// while (args[i] != NULL) {
+//     i++;
+// }
+// char **tokens = calloc(i + 2, sizeof(char*));
+// i = 0;
+
+// while (args[i] != NULL) {
+//     if (args[i][0] == '<') {
+//         if (args[i + 1] != NULL && args[i + 2] != NULL && args[i + 2][0] == '>') {
+//             if (isFile(args[i + 1]) && isFile(args[i + 3])) {
+//                 in = open(args[i + 1], O_RDONLY);
+//                 out = open(args[i + 3], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+//                 dup2(in, 0);
+//                 dup2(out, 1);
+//                 close(in);
+//                 close(out);
+//             }
+//             else {
+//                 printf("--- FILES DO NOT EXIST ---\n");
+//                 break;
+//             }
+//         }
+//         else {
+//             if (isFile(args[i + 1])) {
+//                 in = open(args[i + 1], O_RDONLY);
+//                 printf("in = %d\n", in);
+//                 dup2(in, 0);
+//                 close(in);
+//                 tokens[i] = NULL;
+//                 break;
+//             }
+//             else {
+//                 printf("--- FILES DO NOT EXIST ---\n");
+//                 break;
+//             }
+            
+//         }
+                 
+//     }
+//     if (args[i][0] == '>') {
+//         out = open(args[i + 1], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+//         dup2(out, 1);
+//         close(out);
+//         tokens[i] = NULL;
+//         break;  
+                        
+//     }
+//     tokens[i] = calloc(strlen(args[i]), sizeof(char));
+//     strcpy(tokens[i], args[i]);
+//     i++;
+// }
