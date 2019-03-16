@@ -44,6 +44,7 @@ The shell must check for the following scenarios in order for the input_line to 
 - A command may not end with & unless it is the last command in the command_list.
 - A command must exist in order for it to be fired.
 - A file may not be used for redirecting both the input and the output.
+
 After every check has passed the shell checks for I/O redirection files and saves the file names of them, if they are present in the input_line in order to set up file descriptors in the execution phase.
 Then, the parser tokenizes the input_line into commands in two stages: first, the command is split separately by the pipe symbol ```|```. Afterwards, each resulting command is stored into an array of separated commands from which each command will fire.
 Any command that has ```&``` will be fired immediately after encountering it, incrementing the number of children of the parent.
