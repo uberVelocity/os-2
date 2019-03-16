@@ -151,9 +151,10 @@ char **splitLine(char* line) {
             if (strcmp(token, "&") == 0)	printf("IN IF BECAUSE BACKGROUND\n");
             token[strlen(token) - 1] = 0;
             if (token != 0) {
-                tokens[pos] = token;                    
+                tokens[pos] = token;          
+                         
             }
-            pos++;
+            pos++; 
             tokens[pos] = NULL;
             MODE = BACKGROUND;
             // REMOVE NULLS - HAVE TO HANDLE THIS DIFFERENTLY ANYWAY
@@ -234,7 +235,6 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
     if (pid == 0) {
         printf("\nin:%s\nout:%s\n", inputFilename, outputFilename);
         while (args[i] != NULL) {
-            printf("args[%d] = %s\n", i, args[i]);
             if (strcmp(args[i], "<") == 0 || strcmp(args[i], ">") == 0) {
                 printf("ENCOUNTERED REDIRECTION!\n");
                 stop = 1;
@@ -244,7 +244,15 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
                 i++;
             }
         }
-        
+        i = 0;
+        // Could potentially fix background prosesses with & separated.
+        /*while (args[i] != NULL) {
+            if (args[i+1][0] == 0) {
+                args[i+1][0] = 0;
+            }
+            printf("args[%d][0] = %d\n", i, args[i][0]);
+            i++;
+        }*/
         if (inputFilename != NULL && outputFilename != NULL) {
             // VERIFY THAT THEY EXIST!
             in = open(inputFilename, O_RDONLY);
