@@ -111,6 +111,7 @@ char **splitLine(char* line) {
 	int bufSize = TOK_BUFSIZE, pos = 0;
 	char **tokens = calloc(bufSize, sizeof(char*));
 	char *token;
+	int numOfQuotes = 0;
 	
 	if (!tokens) {
 		fprintf(stderr, "tokbuf: allocation error\n");
@@ -118,18 +119,27 @@ char **splitLine(char* line) {
 	}
     token = strtok(line, TOK_DELIM);
 	while (token != NULL) {
-        
-        // Handle '"' character.
+			printf("token = %s\n", token);
+        // Handle '"' character that is not just one word.
         if (token[0] == '"' && token[strlen(token) - 1] != '"') {
             int posp = pos;
             while (token != NULL && token[strlen(token) - 1] != '"') {
+								printf("token inner while = %s\n", token);
                 // First token and it has quotes.  
                 if (tokens[posp] == NULL) {
-                    strcpy(token, &token[1]);
-                    tokens[posp] = strdup(token);
+										char *temp = strdup(token);
+										strcpy(temp, &token[1]);
+                    // strcpy(token, &token[1]);
+                    
+                    tokens[posp] = strdup(temp);
                 }
                 // There have been other tokens, resize tokens at that position and concatenate the new one.
                 else {
+										if (token[0] == '"') {
+											printf("token to remove first char = %s\n", token);
+											token[0] = '\n';
+											token++;
+										}
                     tokens[posp] = realloc(tokens[posp], (strlen(tokens[posp]) + strlen(token) + 2) * sizeof(char));
                     strcat(tokens[posp], " ");
                     strcat(tokens[posp], token);                    
@@ -149,7 +159,7 @@ char **splitLine(char* line) {
         }
         // Handle Background processes.
         else if (token[strlen(token) - 1] == '&' || strcmp(token, "&") == 0) {
-            if (strcmp(token, "&") == 0)	printf("IN IF BECAUSE BACKGROUND\n");
+            //if (strcmp(token, "&") == 0)	printf("IN IF BECAUSE BACKGROUND\n");
             token[strlen(token) - 1] = 0;
             if (token != 0) {
                 tokens[pos] = token;          
@@ -214,7 +224,7 @@ int validInputLine(char **inputLine, char **inputFilename, char **outputFilename
         }
         if (inputFilename[0] != NULL && outputFilename[0] != NULL) {
             if (strcmp(inputFilename[0], outputFilename[0]) == 0) {
-            printf("### Same input and output files! ###\n");
+            printf("Error: input and output files cannot be equal!\n");
             return 0;
             } 
         }
@@ -274,7 +284,7 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
             close(out);
         }
         if (execvp(args[0], args) == -1) {
-            printf("Command %s not found!\n", args[0]);
+            printf("Error: command not found!\n");// , args[0]);
             exit(EXIT_FAILURE);
         }
     }
@@ -349,10 +359,10 @@ void shLoop(void) {
         // }
         args = splitLine(line);
         int i = 0;
-        // while (args[i] != NULL) {
-        //    printf("token[%d] = %s\n", i, args[i]);
-        //    i++;
-        // }
+        while (args[i] != NULL) {
+           printf("token[%d] = %s\n", i, args[i]);
+           i++;
+        }
         // Background process has been launched, ignore execution.
         if (validInputLine(args, &inputFilename, &outputFilename)) {
             status = execute(args, inputFilename, outputFilename);
