@@ -27,11 +27,15 @@ The logic is as follows:
 5. The output of ```b.out``` is given to ```c.out``` as input.
 6. ```c.out``` executes.
 7. The output of ```c.out``` will be written in the ```out``` file.
+
 ### Shell construction
-The shell has three execution phases.
+The shell has three phases.
 1. The shell waits for an input_line from the user.
 2. The shell checks if the input_line has a valid syntax with the grammar defined in the assignment.
 3. The shell executes the input_line.
+
+#### Input phase
+The shell implements a dynamically allocated buffer in which it stores the input received from the user.
 
 #### Validation of the input_line
 The shell must check for the following scenarios in order for the input_line to pass to the execution phase:
@@ -40,10 +44,12 @@ The shell must check for the following scenarios in order for the input_line to 
 - A command may not end with & unless it is the last command in the command_list.
 - A command must exist in order for it to be fired.
 - A file may not be used for redirecting both the input and the output.
-### Chain of operations
-1. Parse the input to check for valid expression.
-2. Parse buffers to execute the expression.
-3. Terminate processes that 
+After every check has passed the shell checks for I/O redirection files and saves the file names of them, if they are present in the input_line in order to set up file descriptors in the execution phase.
+Then, the parser tokenizes the input_line into commands in two stages: first, the command is split separately by the pipe symbol ```|```. Afterwards, each resulting command is stored into an array of separated commands from which each command will fire.
+Any command that has ```&``` will be fired immediately after encountering it, incrementing the number of children of the parent.
+#### Execution phase
+After a command is ready for execution the shell checks if it is an empty command: if it is then it returns 1 and waits for the next command,
+otherwise the 
 
 ### Possible inputs
 1. After a "<" or a ">" you expect an input / output file. 
