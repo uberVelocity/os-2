@@ -238,15 +238,6 @@ void remove_all_chars(char* str, char c) {
     *pw = '\0';
 }
 
-char* replace_char(char* str, char find, char replace){
-    char *current_pos = strchr(str,find);
-    while (current_pos){
-        *current_pos = replace;
-        current_pos = strchr(current_pos,find);
-    }
-    return str;
-}
-
 /**
  * Another function is required since this will do the input output for 
  * the current executed command, whereas input should only be done for 
@@ -277,11 +268,7 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
 					// printf("AFTER pargs%d = %s\n", k, pargs[k]);
 					k++;
 				}
-				
-				
-				
-				
-				
+
         // Could potentially fix background prosesses with & separated.
         /*while (args[i] != NULL) {
             if (args[i+1][0] == 0) {
@@ -310,7 +297,7 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
             close(out);
         }
         if (execvp(pargs[0], pargs) == -1) {
-            printf("Error: %s command not found!\n" , pargs[0]);
+            printf("Error: command not found!\n");
             exit(EXIT_FAILURE);
         }
     }
