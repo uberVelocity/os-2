@@ -6,11 +6,12 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/wait.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+// #include <readline/readline.h>
+// #include <readline/history.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <ctype.h>
 
 #include "ex1.h"
 
@@ -233,10 +234,10 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
     int in, out, status, i = 0, j = 0, stop = 0;
     pid = fork();
     if (pid == 0) {
-        printf("\nin:%s\nout:%s\n", inputFilename, outputFilename);
+        // printf("\nin:%s\nout:%s\n", inputFilename, outputFilename);
         while (args[i] != NULL) {
             if (strcmp(args[i], "<") == 0 || strcmp(args[i], ">") == 0) {
-                printf("ENCOUNTERED REDIRECTION!\n");
+                // printf("ENCOUNTERED REDIRECTION!\n");
                 stop = 1;
             }
             if (stop)   args[i] = NULL;
@@ -328,30 +329,30 @@ char **pipeSep(char *line) {
 */
 
 void shLoop(void) {
-    init();
+    // init();
     char *line;
     char **sepArgs; // Arguments separated by pipe symbol '|'.
     char **args;
     int status = 1;
     int looped = 0;
     // Configure readline to auto-complete paths when the tab key is hit.
-    rl_bind_key('\t', rl_complete);
+    // rl_bind_key('\t', rl_complete);
 	do {
         char *inputFilename = 0, *outputFilename = 0;        
         // printf("looped = %d\n", looped);
         line = NULL;
         args = NULL;
-        line = readline("> ");
+        line = readLine();
         // Use up arrow to retrieve command from history.
-        if (line && *line) {
-            add_history(line);
-        }
+        // if (line && *line) {
+        //     add_history(line);
+        // }
         args = splitLine(line);
         int i = 0;
-        while (args[i] != NULL) {
-            printf("token[%d] = %s\n", i, args[i]);
-            i++;
-        }
+        // while (args[i] != NULL) {
+        //    printf("token[%d] = %s\n", i, args[i]);
+        //    i++;
+        // }
         // Background process has been launched, ignore execution.
         if (validInputLine(args, &inputFilename, &outputFilename)) {
             status = execute(args, inputFilename, outputFilename);
