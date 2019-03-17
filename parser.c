@@ -172,10 +172,10 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
     char str1[10];
     int in, out, status, i = 0, j = 0, k = 0;
     char **pargs = calloc(TOK_BUFSIZE, sizeof(char*));
-    while (args[i] != NULL) {
-        printf("args[%d] = %s\n", i, args[i]);
-        i++;
-    }
+    // while (args[i] != NULL) {
+    //     printf("args[%d] = %s\n", i, args[i]);
+    //     i++;
+    // }
     i = 0;
     pid = fork();
     if (pid == 0) {
@@ -218,7 +218,7 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
             close(out);
         }
         if (execvp(pargs[0], pargs) == -1) {
-            printf("Error: %s command not found!\n" , pargs[0]);
+            printf("Error: command not found!\n");
             exit(EXIT_FAILURE);
         }
     }
@@ -229,7 +229,6 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
     else {
         if (MODE != BACKGROUND) {
             do {
-                printf("waiting");
                 wpid = waitpid(pid, &status, WUNTRACED);
             } while (!WIFEXITED(status) && !WIFSIGNALED(status));
         }
@@ -257,67 +256,124 @@ int execute(char **args, char *inputFilename, char *outputFilename) {
     return launch(args, inputFilename, outputFilename);
 }
 
-void **divideLine(char *line) {
-    int bufSize = TOK_BUFSIZE, i = 0, j = 0;
+char **divideLine(char *line) {
+    int bufSize = TOK_BUFSIZE, i = 0, j = 0, quotes = 0;;
     char **tokens = calloc(bufSize, sizeof(char*));
-    
+    char *token;
+
+    int pos = 0;
+    int fqPointer = 0, lqPointer = strlen(line) - 1;
+
     if (!tokens) {
         fprintf(stderr, "tokbuf: allocation error\n");
 		exit(EXIT_FAILURE);
 	}
+
     for (i = 0; i < bufSize; i++) {
         tokens[i] = calloc(bufSize, sizeof(char));
     }
 
-    int pos = 0;
-    int fqPointer = 0, lqPointer = strlen(line) - 1;
-    
-    // Detect first and last quotation mark
-    i = 0;
-    while (line[i] != '"') {
-        printf("line[%d] = %c\n", i, line[i]);
-        i++;
-    }
-    fqPointer = i;
-    printf("FIRST = %d\n", fqPointer);
-    
-    i = strlen(line) - 1;
-    while (line[i] != '"') {
-        i--;
-    }
-    lqPointer = i;
-    printf("LAST = %d\n", lqPointer);
-    
-    i = 0, pos = 0;
-    // Populate tokens
-    printf("fqPointer = %d\nlqPointer = %d\n", fqPointer, lqPointer);
+
+    // Check if input has quotes
     for (i = 0; i < strlen(line); i++) {
-        // Out of the largest quotation block
-        if (i < fqPointer || i > lqPointer) {
-            printf("addtotoken: i = %d\n", i);
-            // Spaces indicate arguments
-            if (line[i] == ' ' || line[i] == '"') {
-                printf("incrementing POS for i = %d, current pos = %d\n", i, pos);
+        if (line[i] == '"') {
+            quotes = 1;
+        }
+    }
+    if (quotes) {
+        // Detect first and last quotation mark
+        i = 0;
+        while (line[i] != '"') {
+            // printf("line[%d] = %c\n", i, line[i]);
+            i++;
+        }
+        fqPointer = i;
+        //printf("FIRST = %d\n", fqPointer);
+        
+        i = strlen(line) - 1;
+        while (line[i] != '"') {
+            i--;
+        }
+        lqPointer = i;
+        //printf("LAST = %d\n", lqPointer);
+        i = 0, pos = 0;
+        // Populate tokens
+        //printf("fqPointer = %d\nlqPointer = %d\n", fqPointer, lqPointer);
+        for (i = 0; i < strlen(line); i++) {
+            // Out of the largest quotation block
+            if (i < fqPointer || i > lqPointer) {
+                //printf("addtotoken: i = %d\n", i);
+                // Spaces indicate arguments
+                if (line[i] == ' ') {
+                    printf("incrementing POS for i = %d, current pos = %d\n", i, pos);
+                    pos++;
+                    j = 0;
+                    if (pos >= bufSize) {
+                    bufSize += TOK_BUFSIZE;
+                    tokens = realloc(tokens,bufSize * sizeof(char*));
+                        if (!tokens) {
+                            fprintf(stderr, "tokens: allocation error\n");
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                }
+                // Add character to token at position pos
+                else {
+                    if (tokens[pos][j] != 10) {
+                        printf("tokens[%d][%d] = %c\n", pos, j, line[i]);
+                        tokens[pos][j] = line[i];
+                        j++;
+                    }
+                }
+            }
+            else if ((i == fqPointer || i == lqPointer) && (line[i-1] != ' ' && line[i-1] != '\n' && (line[i+1] != ' ' && line[i+1] != 10 && line[i+1] != 0))) {
                 pos++;
                 j = 0;
+                if (pos >= bufSize) {
+                    bufSize += TOK_BUFSIZE;
+                    tokens = realloc(tokens,bufSize * sizeof(char*));
+                    if (!tokens) {
+                        fprintf(stderr, "tokens: allocation error\n");
+                        exit(EXIT_FAILURE);
+                    }
+                }
             }
-            // Add character to token at position pos
             else {
                 printf("tokens[%d][%d] = %c\n", pos, j, line[i]);
-                tokens[pos][j] = line[i];
-                j++;
+                if (i != fqPointer && i != lqPointer) {
+                    if (tokens[pos][j] != 10) {
+                        tokens[pos][j] = line[i];
+                        j++;
+                    }
+                    
+                }
             }
+            // Inside the largest quotation block
+            
         }
-        else {
-            tokens[pos][j] = line[i];
-            j++;
+        tokens[pos + 1] = NULL;
+    }
+    else {
+        token = strtok(line, TOK_DELIM);
+        pos = 0;
+        while (token != NULL) {
+            tokens[pos] = token;
+            // printf("tokens[%d] = %s\n", pos, tokens[pos]);
+            pos++;
+            if (pos >= bufSize) {
+                bufSize += TOK_BUFSIZE;
+                tokens = realloc(tokens,bufSize * sizeof(char*));
+                if (!tokens) {
+                    fprintf(stderr, "tokens: allocation error\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            token = strtok(NULL, TOK_DELIM);
         }
-        // Inside the largest quotation block
-        
+        tokens[pos] = NULL;
     }
-    for (i = 0; i <= pos; i++) {
-        printf("tokens[%d] = %s\n", i, tokens[i]);
-    }
+    if (tokens[pos] != NULL && tokens[pos][strlen(tokens[pos]) - 1] == '\n')  tokens[pos][strlen(tokens[pos]) - 1] = 0; 
+    return tokens;
 
 }
 
@@ -335,7 +391,7 @@ char **splitLine(char* line) {
     token = strtok(line, TOK_DELIM);
 	while (token != NULL) {
         // Handle quotes.
-        printf("TBMtoken = %s\n", token);
+        // printf("TBMtoken = %s\n", token);
         // Handle '"' character that is not just one word.
         
         // Handle Background processes.
@@ -376,14 +432,29 @@ char **splitLine(char* line) {
 	return tokens;
 }
 
+char **splitCommands(char *line, int *numberCommands) {
+    char **commands = calloc(TOK_BUFSIZE, sizeof(char*));
+    char *delimiter = strtok(line, "|");
+    int i = 0;
+    while (delimiter != NULL) {
+        commands[i] = delimiter;
+        delimiter = strtok(NULL, "|");
+        printf("commands[%d] = %s\n", i, commands[i]);
+        i++;
+    }
+    *numberCommands = i;
+    return commands;
+}
 
 void shLoop(void) {
     // init();
     char *line;
     char **sepArgs; // Arguments separated by pipe symbol '|'.
     char **args;
+    char **commands;
     int status = 1;
     int looped = 0;
+    int numberCommands = 0, i = 0;
     // Configure readline to auto-complete paths when the tab key is hit.
     // rl_bind_key('\t', rl_complete);
 	do {
@@ -391,25 +462,33 @@ void shLoop(void) {
         // printf("looped = %d\n", looped);
         line = NULL;
         args = NULL;
+        // Read input from user.
         line = readLine();
-        divideLine(line);
+        if (validInputLine(divideLine(line), &inputFilename, &outputFilename)) {
+            commands = splitCommands(line, &numberCommands);
+            while (commands[i] != NULL) {
+                args = divideLine(line);
+                status = execute(args, inputFilename, outputFilename, i, numberCommands);
+                i++;
+            }   
+        }
+        // Divide input into separate commands.
+        
+        
         // Use up arrow to retrieve command from history.
         // if (line && *line) {
         //     add_history(line);
         // }
-        /*args = splitLine(line);
-        int i = 0;
-        while (args[i] != NULL) {
-            printf("token[%d] = %s\n", i, args[i]);
-            i++;
-        }
+        // int i = 0;
+        // while (args[i] != NULL) {
+        //     printf("token[%d] = %s\n", i, args[i]);
+        //     i++;
+        // }
         // Background process has been launched, ignore execution.
-        if (validInputLine(args, &inputFilename, &outputFilename)) {
-            status = execute(args, inputFilename, outputFilename);
-        }
+        
         
         free(args);
-        free(line);*/
+        free(line);
         MODE = REGULAR;
         looped++;
 	} while(status);
