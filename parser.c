@@ -113,6 +113,7 @@ int validInputLine(char **inputLine, char **inputFilename, char **outputFilename
     // Check that after arrow I have a name.
     int ioProblem = 0, i = 0, pipeProblem = 0, sameInOut = 0, backProblem = 0;
     while (inputLine[i] != NULL) {
+        printf("input/output compare: %s\n", inputLine[i]);
         // Redirect problem
         if (inputLine[i] != NULL && (strcmp(inputLine[i], "<") == 0 || strcmp(inputLine[i], ">") == 0)) {
             i++;
@@ -167,7 +168,7 @@ void remove_all_chars(char* str, char c) {
  * the current executed command, whereas input should only be done for 
  * the first command and output should only be done for the last command. 
  */
-int launch(char **args, char *inputFilename, char *outputFilename) {
+int launch(char **args, char *inputFilename, char *outputFilename, int nthCommand, int totalCommands) {
     pid_t pid, wpid;
     char str1[10];
     int in, out, status, i = 0, j = 0, k = 0;
@@ -236,24 +237,6 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
     free(pargs);
     // printf("RETURNING 1\n");
     return 1;
-}
-
-int execute(char **args, char *inputFilename, char *outputFilename) {
-    int i;
-
-    if (args[0] == NULL) {
-        return 1;
-    }
-
-    /**
-     * Veify if input command is a builtin Linux command.
-     */
-    for (i = 0; i < num_builtins(); i++) {
-        if (strcmp(args[0], builtin_str[i]) == 0){
-            return (*builtin_func[i])(args);
-        }
-    }
-    return launch(args, inputFilename, outputFilename);
 }
 
 char **divideLine(char *line) {
@@ -406,7 +389,7 @@ char **splitLine(char* line) {
             tokens[pos] = NULL;
             MODE = BACKGROUND;
             // REMOVE NULLS - HAVE TO HANDLE THIS DIFFERENTLY ANYWAY
-            launch(tokens, NULL, NULL);
+            launch(tokens, NULL, NULL, 0, 0);
             free(tokens);
             tokens = calloc(bufSize, sizeof(char*));
             pos = 0;
@@ -446,12 +429,56 @@ char **splitCommands(char *line, int *numberCommands) {
     return commands;
 }
 
+char **removeIO(char **args) {
+    char **newArgs = calloc(TOK_BUFSIZE, sizeof(char*));
+    int i = 0, j = 0;
+    while (args[i] != NULL) {
+        printf("A:%s\n", args[i]);
+        i++;
+    }
+    i = 0;
+    while (args[i] != NULL) {
+        if (strcmp(args[i], "<") == 0 || strcmp(args[i], ">") == 0) {
+            i++;
+        }
+        else {
+            newArgs[j] = strdup(args[i]);
+            j++;
+        }
+        i++;
+    }
+    i = 0;
+    while (newArgs[i] != NULL) {
+        printf("NA:%s\n", newArgs[i]);
+        i++;
+    }
+    return newArgs;
+}
+
+int execute(char **args, char *inputFilename, char *outputFilename, int nthCommand, int totalCommands) {
+    int i;
+
+    if (args[0] == NULL) {
+        return 1;
+    }
+    /**
+     * Veify if input command is a builtin Linux command.
+     */
+    for (i = 0; i < num_builtins(); i++) {
+        if (strcmp(args[0], builtin_str[i]) == 0){
+            return (*builtin_func[i])(args);
+        }
+    }
+    return launch(args, inputFilename, outputFilename, nthCommand, totalCommands);
+}
+
 void shLoop(void) {
     // init();
     char *line, *cpline;
     char **sepArgs; // Arguments separated by pipe symbol '|'.
     char **args;
     char **commands;
+    char **executionCommand;
     int status = 1;
     int looped = 0;
     int numberCommands = 0, i = 0, j = 0;
@@ -466,15 +493,14 @@ void shLoop(void) {
         line = readLine();
         cpline = strdup(line);  // Needed to validify the input without changing it.
         if (validInputLine(divideLine(cpline), &inputFilename, &outputFilename)) {
+            printf("Input file :%s\n", inputFilename);
+            printf("Output file :%s\n", outputFilename);
             commands = splitCommands(line, &numberCommands);
             i = 0;
             while (commands[i] != NULL) {
                 args = divideLine(commands[i]);
-                j = 0;
-                while (args[j] != NULL) {
-                    j++;
-                }
-                // status = execute(args, inputFilename, outputFilename, i, numberCommands);
+                executionCommand = removeIO(args);
+                status = execute(executionCommand, inputFilename, outputFilename, i, numberCommands);
                 i++;
             }   
         }
