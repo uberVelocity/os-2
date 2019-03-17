@@ -448,13 +448,13 @@ char **splitCommands(char *line, int *numberCommands) {
 
 void shLoop(void) {
     // init();
-    char *line;
+    char *line, *cpline;
     char **sepArgs; // Arguments separated by pipe symbol '|'.
     char **args;
     char **commands;
     int status = 1;
     int looped = 0;
-    int numberCommands = 0, i = 0;
+    int numberCommands = 0, i = 0, j = 0;
     // Configure readline to auto-complete paths when the tab key is hit.
     // rl_bind_key('\t', rl_complete);
 	do {
@@ -464,11 +464,17 @@ void shLoop(void) {
         args = NULL;
         // Read input from user.
         line = readLine();
-        if (validInputLine(divideLine(line), &inputFilename, &outputFilename)) {
+        cpline = strdup(line);  // Needed to validify the input without changing it.
+        if (validInputLine(divideLine(cpline), &inputFilename, &outputFilename)) {
             commands = splitCommands(line, &numberCommands);
+            i = 0;
             while (commands[i] != NULL) {
-                args = divideLine(line);
-                status = execute(args, inputFilename, outputFilename, i, numberCommands);
+                args = divideLine(commands[i]);
+                j = 0;
+                while (args[j] != NULL) {
+                    j++;
+                }
+                // status = execute(args, inputFilename, outputFilename, i, numberCommands);
                 i++;
             }   
         }
