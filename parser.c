@@ -119,23 +119,23 @@ char **splitLine(char* line) {
 	}
     token = strtok(line, TOK_DELIM);
 	while (token != NULL) {
-			// printf("token = %s\n", token);
+		// printf("token = %s\n", token);
         // Handle '"' character that is not just one word.
         if (token[0] == '"' && token[strlen(token) - 1] != '"') {
             int posp = pos;
             while (token != NULL && token[strlen(token) - 1] != '"') {
-								// printf("token inner while = %s\n", token);
+				printf("token inner while = %s\n", token);
                 // First token and it has quotes.  
                 if (tokens[posp] == NULL) {
-										token++;                    
+					token++;                    
                     tokens[posp] = strdup(token);
                 }
                 // There have been other tokens, resize tokens at that position and concatenate the new one.
                 else {
-										if (token[0] == '"') {
-											//printf("token to remove first char = %s\n", token);
-											token++;
-										}
+                    if (token[0] == '"') {
+                        //printf("token to remove first char = %s\n", token);
+                        token++;
+                    }
                     tokens[posp] = realloc(tokens[posp], (strlen(tokens[posp]) + strlen(token) + 2) * sizeof(char));
                     strcat(tokens[posp], " ");
                     strcat(tokens[posp], token);                    
@@ -194,8 +194,10 @@ char **splitLine(char* line) {
 int validInputLine(char **inputLine, char **inputFilename, char **outputFilename) {
     // Check for final character being arrow.
     // Check that after arrow I have a name.
-    int ioProblem = 0, i = 0, pipeProblem = 0, sameInOut = 0;
+    int ioProblem = 0, i = 0, pipeProblem = 0, sameInOut = 0, backProblem = 0;
     while (inputLine[i] != NULL) {
+        printf("InputLine = %s\n", inputLine[i]);
+        // Redirect problem
         if (inputLine[i] != NULL && (strcmp(inputLine[i], "<") == 0 || strcmp(inputLine[i], ">") == 0)) {
             i++;
             if (inputLine[i] == NULL || (inputLine[i] != NULL && !isalnum(inputLine[i][0]))) {                
@@ -208,13 +210,19 @@ int validInputLine(char **inputLine, char **inputFilename, char **outputFilename
                 outputFilename[0] = strdup(inputLine[i]);
             }
         }
+        // Pipe problem
         if (inputLine[i] != NULL && strcmp(inputLine[i], "|") == 0) {
             i++;
             if (inputLine[i] == NULL || (inputLine[i] != NULL && !isalnum(inputLine[i][0]))) {
                 pipeProblem = 1;
             }
         }
-        if (ioProblem || pipeProblem) {
+        // Background problem
+        if (inputLine[i] != NULL && strcmp(inputLine[i], "&") == 0 && inputLine[i + 1] != NULL && !isalnum(inputLine[i + 1][0])) {
+            printf("backProblem\n");
+            backProblem = 1;
+        }
+        if (ioProblem || pipeProblem || backProblem) {
             printf("Invalid syntax!\n");
             return 0;   
         }
@@ -238,15 +246,6 @@ void remove_all_chars(char* str, char c) {
     *pw = '\0';
 }
 
-char* replace_char(char* str, char find, char replace){
-    char *current_pos = strchr(str,find);
-    while (current_pos){
-        *current_pos = replace;
-        current_pos = strchr(current_pos,find);
-    }
-    return str;
-}
-
 /**
  * Another function is required since this will do the input output for 
  * the current executed command, whereas input should only be done for 
@@ -257,31 +256,31 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
     char str1[10];
     int in, out, status, i = 0, j = 0, k = 0;
     char **pargs = calloc(TOK_BUFSIZE, sizeof(char*));
+    while (args[i] != NULL) {
+        printf("args[%d] = %s\n", i, args[i]);
+        i++;
+    }
+    i = 0;
     pid = fork();
     if (pid == 0) {
         // printf("\nin:%s\nout:%s\n", inputFilename, outputFilename);
         while (args[i] != NULL) {
-						if (strcmp(args[i], "<") != 0 && strcmp(args[i], ">") != 0) {
-								pargs[j] = strdup(args[i]);
-								i++;
-								j++;
-						}
-						else {
-								i+= 2;
-						}
-				}
-				// Remove quotes from argument
-				while (pargs[k] != NULL) {
-					// printf("BEFORE pargs%d = %s\n", k, pargs[k]);
-					remove_all_chars(pargs[k], '"');
-					// printf("AFTER pargs%d = %s\n", k, pargs[k]);
-					k++;
-				}
-				
-				
-				
-				
-				
+            if (strcmp(args[i], "<") != 0 && strcmp(args[i], ">") != 0) {
+                    pargs[j] = strdup(args[i]);
+                    i++;
+                    j++;
+            }
+            else {
+                    i+= 2;
+            }
+        }
+        // Remove quotes from argument
+        while (pargs[k] != NULL) {
+            // printf("BEFORE pargs%d = %s\n", k, pargs[k]);
+            remove_all_chars(pargs[k], '"');
+            // printf("AFTER pargs%d = %s\n", k, pargs[k]);
+            k++;
+        }	
         // Could potentially fix background prosesses with & separated.
         /*while (args[i] != NULL) {
             if (args[i+1][0] == 0) {
@@ -321,6 +320,7 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
     else {
         if (MODE != BACKGROUND) {
             do {
+                printf("waiting");
                 wpid = waitpid(pid, &status, WUNTRACED);
             } while (!WIFEXITED(status) && !WIFSIGNALED(status));
         }
@@ -348,23 +348,6 @@ int execute(char **args, char *inputFilename, char *outputFilename) {
     return launch(args, inputFilename, outputFilename);
 }
 
-/*
-char **pipeSep(char *line) {
-	char *pchar;
-	char *sepCmd[256];
-	pchar = strtok(line, "|");
-	int count = 0;
-	while (pch != NULL && count < 256) {
-      printf("%s\n", pch);
-      sepCmd[count] = pch;
-      printf("The value in this array value is: %s\n", sepCmd[count]);
-      pch = strtok (NULL, "|");
-      count++;
-  }
-  return sepCmd;
-}
-*/
-
 void shLoop(void) {
     // init();
     char *line;
@@ -386,21 +369,21 @@ void shLoop(void) {
         // }
         args = splitLine(line);
         int i = 0;
-        // while (args[i] != NULL) {
-        //  printf("token[%d] = %s\n", i, args[i]);
-        //  i++;
-        // }
+        while (args[i] != NULL) {
+            printf("token[%d] = %s\n", i, args[i]);
+            i++;
+        }
         // Background process has been launched, ignore execution.
         if (validInputLine(args, &inputFilename, &outputFilename)) {
             status = execute(args, inputFilename, outputFilename);
         }
+        
         free(args);
         free(line);
         MODE = REGULAR;
         looped++;
 	} while(status);
 }
-
 
 int main(int argc, char* argv[]) {
     setbuf(stdout, NULL);
