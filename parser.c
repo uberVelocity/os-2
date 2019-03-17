@@ -107,96 +107,12 @@ void x2rectangle() {
     printf("\n*****************\n*\t\t*\n*\t\t*\n*\t\t*\n*****************\n");
 }
 
-char **splitLine(char* line) {
-	int bufSize = TOK_BUFSIZE, pos = 0;
-	char **tokens = calloc(bufSize, sizeof(char*));
-	char *token;
-	int numOfQuotes = 0;
-	
-	if (!tokens) {
-		fprintf(stderr, "tokbuf: allocation error\n");
-		exit(EXIT_FAILURE);
-	}
-    token = strtok(line, TOK_DELIM);
-	while (token != NULL) {
-		// printf("token = %s\n", token);
-        // Handle '"' character that is not just one word.
-        if (token[0] == '"' && token[strlen(token) - 1] != '"') {
-            int posp = pos;
-            while (token != NULL && token[strlen(token) - 1] != '"') {
-				printf("token inner while = %s\n", token);
-                // First token and it has quotes.  
-                if (tokens[posp] == NULL) {
-					token++;                    
-                    tokens[posp] = strdup(token);
-                }
-                // There have been other tokens, resize tokens at that position and concatenate the new one.
-                else {
-                    if (token[0] == '"') {
-                        //printf("token to remove first char = %s\n", token);
-                        token++;
-                    }
-                    tokens[posp] = realloc(tokens[posp], (strlen(tokens[posp]) + strlen(token) + 2) * sizeof(char));
-                    strcat(tokens[posp], " ");
-                    strcat(tokens[posp], token);                    
-                }
-                token = strtok(NULL, TOK_DELIM);
-                if (token != NULL && token[strlen(token) - 1] == '"') {
-                    tokens[posp] = realloc(tokens[posp], (strlen(tokens[posp]) + strlen(token) + 2) * sizeof(char));
-                    strcat(tokens[posp], " ");
-                    token[strlen(token) - 1] = 0;
-                    strcat(tokens[posp], token);
-                    token = strtok(NULL, TOK_DELIM);
-                }
-                if (token == NULL) {
-                    pos++;
-                }
-            }
-        }
-        // Handle Background processes.
-        else if (token[strlen(token) - 1] == '&' || strcmp(token, "&") == 0) {
-            //if (strcmp(token, "&") == 0)	printf("IN IF BECAUSE BACKGROUND\n");
-            token[strlen(token) - 1] = 0;
-            if (token != 0) {
-                tokens[pos] = token;          
-                         
-            }
-            pos++; 
-            tokens[pos] = NULL;
-            MODE = BACKGROUND;
-            // REMOVE NULLS - HAVE TO HANDLE THIS DIFFERENTLY ANYWAY
-            launch(tokens, NULL, NULL);
-            free(tokens);
-            tokens = calloc(bufSize, sizeof(char*));
-            pos = 0;
-            token = strtok(NULL, TOK_DELIM);
-        }
-        // Handle normal processes.
-        else if (token != NULL && strcmp(token, "&") != 0) {
-            MODE = REGULAR;
-            tokens[pos] = token;          
-            pos++;
-            if (pos >= bufSize) {
-                bufSize += TOK_BUFSIZE;
-                tokens = realloc(tokens,bufSize * sizeof(char*));
-                if (!tokens) {
-                    fprintf(stderr, "tokens: allocation error\n");
-                    exit(EXIT_FAILURE);
-                }
-            }
-        } 
-        token = strtok(NULL, TOK_DELIM);
-    }
-    tokens[pos] = NULL;
-	return tokens;
-}
 
 int validInputLine(char **inputLine, char **inputFilename, char **outputFilename) {
     // Check for final character being arrow.
     // Check that after arrow I have a name.
     int ioProblem = 0, i = 0, pipeProblem = 0, sameInOut = 0, backProblem = 0;
     while (inputLine[i] != NULL) {
-        printf("InputLine = %s\n", inputLine[i]);
         // Redirect problem
         if (inputLine[i] != NULL && (strcmp(inputLine[i], "<") == 0 || strcmp(inputLine[i], ">") == 0)) {
             i++;
@@ -266,12 +182,12 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
         // printf("\nin:%s\nout:%s\n", inputFilename, outputFilename);
         while (args[i] != NULL) {
             if (strcmp(args[i], "<") != 0 && strcmp(args[i], ">") != 0) {
-                    pargs[j] = strdup(args[i]);
-                    i++;
-                    j++;
+                pargs[j] = strdup(args[i]);
+                i++;
+                j++;
             }
             else {
-                    i+= 2;
+                i+= 2;
             }
         }
         // Remove quotes from argument
@@ -281,14 +197,7 @@ int launch(char **args, char *inputFilename, char *outputFilename) {
             // printf("AFTER pargs%d = %s\n", k, pargs[k]);
             k++;
         }	
-        // Could potentially fix background prosesses with & separated.
-        /*while (args[i] != NULL) {
-            if (args[i+1][0] == 0) {
-                args[i+1][0] = 0;
-            }
-            printf("args[%d][0] = %d\n", i, args[i][0]);
-            i++;
-        }*/
+
         if (inputFilename != NULL && outputFilename != NULL) {
             // VERIFY THAT THEY EXIST!
             in = open(inputFilename, O_RDONLY);
@@ -348,6 +257,126 @@ int execute(char **args, char *inputFilename, char *outputFilename) {
     return launch(args, inputFilename, outputFilename);
 }
 
+void **divideLine(char *line) {
+    int bufSize = TOK_BUFSIZE, i = 0, j = 0;
+    char **tokens = calloc(bufSize, sizeof(char*));
+    
+    if (!tokens) {
+        fprintf(stderr, "tokbuf: allocation error\n");
+		exit(EXIT_FAILURE);
+	}
+    for (i = 0; i < bufSize; i++) {
+        tokens[i] = calloc(bufSize, sizeof(char));
+    }
+
+    int pos = 0;
+    int fqPointer = 0, lqPointer = strlen(line) - 1;
+    
+    // Detect first and last quotation mark
+    i = 0;
+    while (line[i] != '"') {
+        printf("line[%d] = %c\n", i, line[i]);
+        i++;
+    }
+    fqPointer = i;
+    printf("FIRST = %d\n", fqPointer);
+    
+    i = strlen(line) - 1;
+    while (line[i] != '"') {
+        i--;
+    }
+    lqPointer = i;
+    printf("LAST = %d\n", lqPointer);
+    
+    i = 0, pos = 0;
+    // Populate tokens
+    printf("fqPointer = %d\nlqPointer = %d\n", fqPointer, lqPointer);
+    for (i = 0; i < strlen(line); i++) {
+        // Out of the largest quotation block
+        if (i < fqPointer || i > lqPointer) {
+            printf("addtotoken: i = %d\n", i);
+            // Spaces indicate arguments
+            if (line[i] == ' ' || line[i] == '"') {
+                printf("incrementing POS for i = %d, current pos = %d\n", i, pos);
+                pos++;
+                j = 0;
+            }
+            // Add character to token at position pos
+            else {
+                printf("tokens[%d][%d] = %c\n", pos, j, line[i]);
+                tokens[pos][j] = line[i];
+                j++;
+            }
+        }
+        else {
+            tokens[pos][j] = line[i];
+            j++;
+        }
+        // Inside the largest quotation block
+        
+    }
+    for (i = 0; i <= pos; i++) {
+        printf("tokens[%d] = %s\n", i, tokens[i]);
+    }
+
+}
+
+char **splitLine(char* line) {
+	int bufSize = TOK_BUFSIZE, pos = 0;
+	int inQuotes = 0;
+    char **tokens = calloc(bufSize, sizeof(char*));
+	char *token;
+	int numOfQuotes = 0;
+	
+	if (!tokens) {
+		fprintf(stderr, "tokbuf: allocation error\n");
+		exit(EXIT_FAILURE);
+	}
+    token = strtok(line, TOK_DELIM);
+	while (token != NULL) {
+        // Handle quotes.
+        printf("TBMtoken = %s\n", token);
+        // Handle '"' character that is not just one word.
+        
+        // Handle Background processes.
+        if (token[strlen(token) - 1] == '&' || strcmp(token, "&") == 0) {
+            //if (strcmp(token, "&") == 0)	printf("IN IF BECAUSE BACKGROUND\n");
+            token[strlen(token) - 1] = 0;
+            if (token != 0) {
+                tokens[pos] = token;          
+                         
+            }
+            pos++; 
+            tokens[pos] = NULL;
+            MODE = BACKGROUND;
+            // REMOVE NULLS - HAVE TO HANDLE THIS DIFFERENTLY ANYWAY
+            launch(tokens, NULL, NULL);
+            free(tokens);
+            tokens = calloc(bufSize, sizeof(char*));
+            pos = 0;
+            token = strtok(NULL, TOK_DELIM);
+        }
+        // Handle normal processes.
+        else if (token != NULL && strcmp(token, "&") != 0) {
+            MODE = REGULAR;
+            tokens[pos] = token;          
+            pos++;
+            if (pos >= bufSize) {
+                bufSize += TOK_BUFSIZE;
+                tokens = realloc(tokens,bufSize * sizeof(char*));
+                if (!tokens) {
+                    fprintf(stderr, "tokens: allocation error\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        } 
+        token = strtok(NULL, TOK_DELIM);
+    }
+    tokens[pos] = NULL;
+	return tokens;
+}
+
+
 void shLoop(void) {
     // init();
     char *line;
@@ -363,11 +392,12 @@ void shLoop(void) {
         line = NULL;
         args = NULL;
         line = readLine();
+        divideLine(line);
         // Use up arrow to retrieve command from history.
         // if (line && *line) {
         //     add_history(line);
         // }
-        args = splitLine(line);
+        /*args = splitLine(line);
         int i = 0;
         while (args[i] != NULL) {
             printf("token[%d] = %s\n", i, args[i]);
@@ -379,7 +409,7 @@ void shLoop(void) {
         }
         
         free(args);
-        free(line);
+        free(line);*/
         MODE = REGULAR;
         looped++;
 	} while(status);
