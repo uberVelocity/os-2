@@ -72,27 +72,19 @@ The shell must check for the following scenarios in order for the input_line to 
 
 After every check has passed, the shell checks for I/O redirection files and saves the file names of them, if they are present in the input_line in order to set up file descriptors in the execution phase.
 Then, the parser tokenizes the input_line into commands in two stages: first, the command is split separately by the pipe symbol ```|```. Afterwards, each resulting command is stored into an array of separated commands from which each command will fire.
-Any command that has ```&``` will be fired immediately after encountering it, incrementing the number of children of the parent (removed).
 #### Execution phase
 After a command is ready for execution the shell checks if it is an empty command: if it is then it returns 1 and waits for the next command. Otherwise, it fires the command.
 
-### Possible inputs
-1. After a "<" or a ">" you expect an input / output file. 
-- \< redirects information into the lhs from the rhs.
-- \> redirects information from the lhs into the rhs.
-So, A > B should create a file descriptor that is used to communicate
-between A and B. > will mean that A will write information to B.
-This can be done by opening the file B and writing on B whatever output
-A provides.
-A \< B will mean that A will read information from B. This implies that
-B should be opened and read until the eof. The information taken from
-B should then be provided as input into A.
-2. [commandA] | [commandB] should create a new pipe between commandA
-and commandB.
-Pipes and input/output redirection [example #1](http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html), [example #2](https://www.unix.com/programming/122360-c-piping-redirect-operator.html), [example #3](https://www.geeksforgeeks.org/making-linux-shell-c/)
+### Evaluation of performance
+The program is able to pass test cases: {1, 4, 5, 6, 8, 10, 12}.
+- Test case 9 passes when pipes are not implemented, indicating that there is some improper validation of a command when pipes are present.
+- We were unable to find test cases for quotation symbols that the program did not dealt with the way it was expected of us.
+- I/O redirection combined seems to work regardless of where one chooses to put the redirection symbols in the command line.
+- Error checking is done in the validation phase and implements the types of errors described in the assignment.
+- Overall, the program is able to simulate most of the functionality required in the assignment.
 
-### Explanations
-Functionality has been added and now commands including quotes are parsed appropriately.
+### Design choices
+Functionality has been added and in order for commands including quotes to be parsed appropriately.
 As an example, consider the command:
 ```bash
 echo "some string <> with 'special' characters"
@@ -112,7 +104,13 @@ In this scenario, bash uses the quotes to logically group and evaluate the value
 cat some\ file\ that's\ on\ the\ computer
 ```
 This is also supported by the shell as it takes as parameters to the command (```args[0] = cat, args[1] = some file that's on the computer```. Whatever ```cat``` chooses to do with the command (transform it into ```cat some\ file\ that's\ on\ the\ computer```) is up to it.
-- [X] Implement background processes. Background processes were possible within the shell by specifying the special character ```&```.
+Lastly, if there are quotes within quotes, the program takes everything that is in-between the outer-most quotes as one token. So:
+```bash
+cat < "some file with "inner" quotes" -n
+```
+will be tokenized into {cat, <, some file with "inner" quotes, -n}.
+This is different than the Linux way of doing it, which would be {cat, <, some file with , inner,  quotes, -n}, however after communication with the T.A.s we've learned that the former is required. Both versions have been implemented and both fail the third test case, and so we think that we might have missed an implementation bug or completely misunderstood the tokenization methodology expected of us for string parsing.
+- [X] Implement background processes. Background processes were possible within the shell by specifying the special character ```&```. They have been removed since improper handling of the background processes resulted in orphan processes. 
 ```bash
 xeyes &
 ```
@@ -120,12 +118,19 @@ was a valid command and it would start the process in background
 ```bash
 xeyes&
 ```
-will also start a background process.
+would have also started a background process.
 ### Extensions
-As far as extensions go, we have implemented ```help``` and ```cd```.
-- [X] Retrieve history of commands using up-arrow key using readline library. (themis does not have it by default apparently).
-- [x] Implement cd/help (extension)
-- [x] Auto-complete path names with tab (extension - GNU Readline)
+As far as extensions go we have implemented the following.
+- [X] Retrieve history of commands using up-arrow key (implemented using GNU - readline library).
+- [x] Builtin functions: cd/help/exit.
+- [x] Auto-complete path names with tab (implemented using GNU - readline library.
+- [X] Shell '>' prompt when awaiting an input. This is handy to have to observe background processes as the '>' is consistently after the output of the foreground process, whilst this is not the case for background processes.
+
+### Development process
+Seeing the scope of the assignment, we've started working on it fairly soon. Until the grammar was uploaded to nestor, we came up with our own way of interpreting commands in Linux:
+
+### Conclusion
+Overall, background processes and disposing of orphans are two features which are not yet supported by our shell. We think that one factor that influenced the development process of the shell is how we interpreted the grammar and the possible inputs that the shell can receive. In most cases we would debug the shell using Bash which, at least in the case of quotes and redirection, handles commands differently. As such, we had arrived at an implementation of a shell that was immitating Bash more-so than anything. After going to the lab on Thursday and clarifying the program's behaviour, major design changes had to be made and unfortunately we couldn't manage to implement every one. The trickiest part of the assignment, in our view, is handling the tokenization and interpreting the input line. We considered using Bison in order to parse the input_line, however none of us had any experience with it and decided against it. 
 
 ### Remaining Extensions:
 - tab twice to show possibilities
