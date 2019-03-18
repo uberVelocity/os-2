@@ -113,17 +113,17 @@ int validInputLine(char **inputLine, char **inputFilename, char **outputFilename
     // Check that after arrow I have a name.
     int ioProblem = 0, i = 0, pipeProblem = 0, sameInOut = 0, backProblem = 0;
     while (inputLine[i] != NULL) {
-        printf("input/output compare: %s\n", inputLine[i]);
+        // printf("input/output compare: %s\n", inputLine[i]);
         // Redirect problem
         if (inputLine[i] != NULL && (strcmp(inputLine[i], "<") == 0 || strcmp(inputLine[i], ">") == 0)) {
             i++;
-            if (inputLine[i] == NULL || (inputLine[i] != NULL && !isalnum(inputLine[i][0]))) {                
+            if (inputLine[i] == NULL || (inputLine[i] != NULL && (!isalnum(inputLine[i][0]) && inputLine[i][0] != '.'))) {                
                 ioProblem = 1;
             }
-            if (inputLine[i] != NULL && isalnum(inputLine[i][0]) && strcmp(inputLine[i-1], "<") == 0) {
+            if (inputLine[i] != NULL && (inputLine[i][0] == '"' || inputLine[i][0] == '.' || isalnum(inputLine[i][0])) && strcmp(inputLine[i-1], "<") == 0) {
                 inputFilename[0] = strdup(inputLine[i]);
             }
-            if (inputLine[i] != NULL && isalnum(inputLine[i][0]) && strcmp(inputLine[i-1], ">") == 0) {
+            if (inputLine[i] != NULL && (inputLine[i][0] == '"' || inputLine[i][0] == '.' || isalnum(inputLine[i][0])) && strcmp(inputLine[i-1], ">") == 0) {
                 outputFilename[0] = strdup(inputLine[i]);
             }
         }
@@ -168,57 +168,51 @@ void remove_all_chars(char* str, char c) {
  * the current executed command, whereas input should only be done for 
  * the first command and output should only be done for the last command. 
  */
-int launch(char **args, char *inputFilename, char *outputFilename, int nthCommand, int totalCommands) {
+int launch(char **args, char *inputFilename, char *outputFilename, int nthCommand, int totalCommands, int *pipefds, int j) {
     pid_t pid, wpid;
-    char str1[10];
-    int in, out, status, i = 0, j = 0, k = 0;
-    char **pargs = calloc(TOK_BUFSIZE, sizeof(char*));
-    // while (args[i] != NULL) {
-    //     printf("args[%d] = %s\n", i, args[i]);
-    //     i++;
-    // }
+    int in, out, status, i = 0, k = 0;
     i = 0;
     pid = fork();
     if (pid == 0) {
-        // printf("\nin:%s\nout:%s\n", inputFilename, outputFilename);
-        while (args[i] != NULL) {
-            if (strcmp(args[i], "<") != 0 && strcmp(args[i], ">") != 0) {
-                pargs[j] = strdup(args[i]);
-                i++;
-                j++;
+        // First command which needs to take input file if it exists.
+        if (nthCommand == 0) {
+            // If there is an in file, transfer stdio to it.
+            if (inputFilename != NULL) {
+                in = open(inputFilename, O_RDONLY);
+                if (in == -1) {
+                    perror(0);
+                    exit(EXIT_FAILURE);
+                }
+                // dup2(pipefds[0], STDOUT_FILENO);
+                dup2(in, 0);
+                close(in);
+                
+                
             }
-            else {
-                i+= 2;
+            // Case where there is an out file and only one command. *CHECK THIS CONDITION*
+            if (outputFilename != NULL && totalCommands == 1) {
+                out = open(outputFilename, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+                if (out == -1) {
+                    perror(0);
+                    exit(EXIT_FAILURE);
+                }
+                dup2(out, 1);
+                close(out);
             }
         }
-        // Remove quotes from argument
-        while (pargs[k] != NULL) {
-            // printf("BEFORE pargs%d = %s\n", k, pargs[k]);
-            remove_all_chars(pargs[k], '"');
-            // printf("AFTER pargs%d = %s\n", k, pargs[k]);
-            k++;
-        }	
-
-        if (inputFilename != NULL && outputFilename != NULL) {
-            // VERIFY THAT THEY EXIST!
-            in = open(inputFilename, O_RDONLY);
-            out = open(outputFilename, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-            dup2(in, 0);
-            dup2(out, 1);
-            close(in);
-            close(out);
+        // Last command should redirect stdout to out if it exists.
+        else if (nthCommand == totalCommands - 1) {
+            if (outputFilename != NULL) {
+                out = open(outputFilename, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+                if (out == -1) {
+                    perror(0);
+                    exit(EXIT_FAILURE);
+                }
+                dup2(out, 1);
+                close(out);
+            }
         }
-        else if (inputFilename != NULL && outputFilename == NULL) {
-            in = open(inputFilename, O_RDONLY);
-            dup2(in, 0);
-            close(in);
-        }
-        else if (inputFilename == NULL && outputFilename != NULL) {
-            out = open(outputFilename, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-            dup2(out, 1);
-            close(out);
-        }
-        if (execvp(pargs[0], pargs) == -1) {
+        if (execvp(args[0], args) == -1) {
             printf("Error: command not found!\n");
             exit(EXIT_FAILURE);
         }
@@ -234,8 +228,7 @@ int launch(char **args, char *inputFilename, char *outputFilename, int nthComman
             } while (!WIFEXITED(status) && !WIFSIGNALED(status));
         }
     }
-    free(pargs);
-    // printf("RETURNING 1\n");
+    free(args);
     return 1;
 }
 
@@ -287,8 +280,8 @@ char **divideLine(char *line) {
             if (i < fqPointer || i > lqPointer) {
                 //printf("addtotoken: i = %d\n", i);
                 // Spaces indicate arguments
-                if (line[i] == ' ') {
-                    printf("incrementing POS for i = %d, current pos = %d\n", i, pos);
+                if (i != 0 && line[i] == ' ') {
+                    // printf("incrementing POS for i = %d, current pos = %d\n", i, pos);
                     pos++;
                     j = 0;
                     if (pos >= bufSize) {
@@ -302,8 +295,8 @@ char **divideLine(char *line) {
                 }
                 // Add character to token at position pos
                 else {
-                    if (tokens[pos][j] != 10) {
-                        printf("tokens[%d][%d] = %c\n", pos, j, line[i]);
+                    if (tokens[pos][j] != 10 && tokens[pos][j] != ' ') {
+                        // printf("!!!tokens[%d][%d] = %c\n", pos, j, line[i]);
                         tokens[pos][j] = line[i];
                         j++;
                     }
@@ -322,7 +315,7 @@ char **divideLine(char *line) {
                 }
             }
             else {
-                printf("tokens[%d][%d] = %c\n", pos, j, line[i]);
+                // printf("tokens[%d][%d] = %c\n", pos, j, line[i]);
                 if (i != fqPointer && i != lqPointer) {
                     if (tokens[pos][j] != 10) {
                         tokens[pos][j] = line[i];
@@ -360,69 +353,15 @@ char **divideLine(char *line) {
 
 }
 
-char **splitLine(char* line) {
-	int bufSize = TOK_BUFSIZE, pos = 0;
-	int inQuotes = 0;
-    char **tokens = calloc(bufSize, sizeof(char*));
-	char *token;
-	int numOfQuotes = 0;
-	
-	if (!tokens) {
-		fprintf(stderr, "tokbuf: allocation error\n");
-		exit(EXIT_FAILURE);
-	}
-    token = strtok(line, TOK_DELIM);
-	while (token != NULL) {
-        // Handle quotes.
-        // printf("TBMtoken = %s\n", token);
-        // Handle '"' character that is not just one word.
-        
-        // Handle Background processes.
-        if (token[strlen(token) - 1] == '&' || strcmp(token, "&") == 0) {
-            //if (strcmp(token, "&") == 0)	printf("IN IF BECAUSE BACKGROUND\n");
-            token[strlen(token) - 1] = 0;
-            if (token != 0) {
-                tokens[pos] = token;          
-                         
-            }
-            pos++; 
-            tokens[pos] = NULL;
-            MODE = BACKGROUND;
-            // REMOVE NULLS - HAVE TO HANDLE THIS DIFFERENTLY ANYWAY
-            launch(tokens, NULL, NULL, 0, 0);
-            free(tokens);
-            tokens = calloc(bufSize, sizeof(char*));
-            pos = 0;
-            token = strtok(NULL, TOK_DELIM);
-        }
-        // Handle normal processes.
-        else if (token != NULL && strcmp(token, "&") != 0) {
-            MODE = REGULAR;
-            tokens[pos] = token;          
-            pos++;
-            if (pos >= bufSize) {
-                bufSize += TOK_BUFSIZE;
-                tokens = realloc(tokens,bufSize * sizeof(char*));
-                if (!tokens) {
-                    fprintf(stderr, "tokens: allocation error\n");
-                    exit(EXIT_FAILURE);
-                }
-            }
-        } 
-        token = strtok(NULL, TOK_DELIM);
-    }
-    tokens[pos] = NULL;
-	return tokens;
-}
-
 char **splitCommands(char *line, int *numberCommands) {
     char **commands = calloc(TOK_BUFSIZE, sizeof(char*));
     char *delimiter = strtok(line, "|");
     int i = 0;
     while (delimiter != NULL) {
+        // printf("DELIMITER = %s\n", delimiter);
         commands[i] = delimiter;
         delimiter = strtok(NULL, "|");
-        printf("commands[%d] = %s\n", i, commands[i]);
+        // printf("commands[%d] = %s\n", i, commands[i]);
         i++;
     }
     *numberCommands = i;
@@ -432,10 +371,10 @@ char **splitCommands(char *line, int *numberCommands) {
 char **removeIO(char **args) {
     char **newArgs = calloc(TOK_BUFSIZE, sizeof(char*));
     int i = 0, j = 0;
-    while (args[i] != NULL) {
-        printf("A:%s\n", args[i]);
-        i++;
-    }
+    // while (args[i] != NULL) {
+    //     printf("A:%s\n", args[i]);
+    //     i++;
+    // }
     i = 0;
     while (args[i] != NULL) {
         if (strcmp(args[i], "<") == 0 || strcmp(args[i], ">") == 0) {
@@ -448,14 +387,14 @@ char **removeIO(char **args) {
         i++;
     }
     i = 0;
-    while (newArgs[i] != NULL) {
-        printf("NA:%s\n", newArgs[i]);
-        i++;
-    }
+    // while (newArgs[i] != NULL) {
+    //     printf("NA:%s\n", newArgs[i]);
+    //     i++;
+    // }
     return newArgs;
 }
 
-int execute(char **args, char *inputFilename, char *outputFilename, int nthCommand, int totalCommands) {
+int execute(char **args, char *inputFilename, char *outputFilename, int nthCommand, int totalCommands, int *pipefds, int j) {
     int i;
 
     if (args[0] == NULL) {
@@ -469,7 +408,7 @@ int execute(char **args, char *inputFilename, char *outputFilename, int nthComma
             return (*builtin_func[i])(args);
         }
     }
-    return launch(args, inputFilename, outputFilename, nthCommand, totalCommands);
+    return launch(args, inputFilename, outputFilename, nthCommand, totalCommands, pipefds, j);
 }
 
 void shLoop(void) {
@@ -479,6 +418,7 @@ void shLoop(void) {
     char **args;
     char **commands;
     char **executionCommand;
+    int *pipefds;
     int status = 1;
     int looped = 0;
     int numberCommands = 0, i = 0, j = 0;
@@ -491,21 +431,36 @@ void shLoop(void) {
         args = NULL;
         // Read input from user.
         line = readLine();
+        // printf("LINE =:%s:\n", line);
+        line[strlen(line) - 1] = 0;
+        // printf("LINE AFTER=:%s:\n", line);
         cpline = strdup(line);  // Needed to validify the input without changing it.
         if (validInputLine(divideLine(cpline), &inputFilename, &outputFilename)) {
-            printf("Input file :%s\n", inputFilename);
-            printf("Output file :%s\n", outputFilename);
-            commands = splitCommands(line, &numberCommands);
+            // printf("Input file :%s\n", inputFilename);
+            // printf("Output file :%s\n", outputFilename);
             i = 0;
-            while (commands[i] != NULL) {
-                args = divideLine(commands[i]);
-                executionCommand = removeIO(args);
-                status = execute(executionCommand, inputFilename, outputFilename, i, numberCommands);
-                i++;
-            }   
+            commands = splitCommands(line, &numberCommands);
+            // Fire single command, do not handle piping.
+            if (numberCommands == 1) {
+                i = 0;
+                while (commands[i] != NULL) {
+                    args = divideLine(commands[i]);
+                    // Remove front space from command argument
+                    if (args[0][0] == ' ') {
+                        memmove(&args[0][0], &args[0][1], strlen(args[0]) - 0);
+                    }
+                    executionCommand = removeIO(args);
+                    status = execute(executionCommand, inputFilename, outputFilename, i, numberCommands, pipefds, j);
+                    i++;
+                }
+            }
+            // Handle multiple commands -> pipes!
+            else {
+                
+
+            }
         }
         // Divide input into separate commands.
-        
         
         // Use up arrow to retrieve command from history.
         // if (line && *line) {
@@ -518,7 +473,7 @@ void shLoop(void) {
         // }
         // Background process has been launched, ignore execution.
         
-        
+        // free(pipefds);
         free(args);
         free(line);
         MODE = REGULAR;
