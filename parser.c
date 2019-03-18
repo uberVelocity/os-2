@@ -413,13 +413,14 @@ int execute(char **args, char *inputFilename, char *outputFilename, int nthComma
 
 void shLoop(void) {
     // init();
+    pid_t pid;
     char *line, *cpline;
     char **sepArgs; // Arguments separated by pipe symbol '|'.
     char **args;
     char **commands;
     char **executionCommand;
     int *pipefds;
-    int status = 1;
+    int status;
     int looped = 0;
     int numberCommands = 0, i = 0, j = 0;
     // Configure readline to auto-complete paths when the tab key is hit.
@@ -456,8 +457,55 @@ void shLoop(void) {
             }
             // Handle multiple commands -> pipes!
             else {
-                
+                i = 0;
+                pipefds = calloc(2 * numberCommands, sizeof(int));
+                for (i = 0; i < numberCommands; i++) {
+                    printf("init pipes!\n");
+                    if (pipe(pipefds + i*2) < 0) {
+                        perror("couldn't pipe");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                j = 0;
+                while (commands[i] != NULL) {
+                    pid = fork();
+                    if (pid == 0) {
+                        if (commands[i + 1] != NULL) {
+                            if (dup2(pipefds[j + 1], 1) < 0) {
+                                perror("dup2");
+                                exit(EXIT_FAILURE);
+                            }
+                        }
+                        if (j != 0) {
+                            if(dup2(pipefds[j-2], 0) < 0) {
+                                perror("dup2");
+                                exit(EXIT_FAILURE);
+                            }
+                        }
+                        for (i = 0; i < 2 * numberCommands; i++) {
+                            close(pipefds[i]);
+                        }
+                        if (execvp(commands[0], commands) < 0) {
+                            perror(commands[0]);
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                    else if (pid < 0) {
+                        perror("error");
+                        exit(EXIT_FAILURE);
+                    }
+                    i++;
+                    j+=2;
+                }
+            }
+            if (numberCommands > 1) {
+                for (i = 0; i < 2 * numberCommands; i++) {
+                    close(pipefds[i]);
+                }
 
+                for(i = 0; i < numberCommands + 1; i++) {
+                    wait(&status);
+                }
             }
         }
         // Divide input into separate commands.
