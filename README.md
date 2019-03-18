@@ -128,6 +128,16 @@ As far as extensions go we have implemented the following.
 
 ### Development process
 Seeing the scope of the assignment, we've started working on it fairly soon. Until the grammar was uploaded to nestor, we came up with our own way of interpreting commands in Linux:
+![](unnamed.jpg)
+It was based on four configurations that a command can be in. The program would check from C4 until C1 in order to assess in which configuration the input is. If it failed to match the input with any of the four configurations, it meant that the command was invalid.
+
+This approach was quickly revamped as the grammar of the shell was made available (the old version can be found on [github](https://github.com/uberVelocity/os-2)).
+
+We found that separating concerns in small functions made the program more modular. This is why we have two separate blocks used for launching a command. One block deals with simple commands without pipes, the other block implements the pipe handling:
+```C
+// Used for executing 
+int launch(char **, char *, char *, int, int, int *, int);
+```
 
 ### Conclusion
 Overall, background processes and disposing of orphans are two features which are not yet supported by our shell. We think that one factor that influenced the development process of the shell is how we interpreted the grammar and the possible inputs that the shell can receive. In most cases we would debug the shell using Bash which, at least in the case of quotes and redirection, handles commands differently. As such, we had arrived at an implementation of a shell that was immitating Bash more-so than anything. After going to the lab on Thursday and clarifying the program's behaviour, major design changes had to be made and unfortunately we couldn't manage to implement every one. The trickiest part of the assignment, in our view, is handling the tokenization and interpreting the input line. We considered using Bison in order to parse the input_line, however none of us had any experience with it and decided against it. 
