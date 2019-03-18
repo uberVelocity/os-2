@@ -45,7 +45,11 @@ They were supported at one point during the shell by not waiting for the process
 to cause orphan processes. One implementation that might deal with defunct processes is to store the pid of each process in the parent through an array. Knowing how many processes the parent has created, it would know for how many processes it should wait for. Unfortunately, we have not implemented this in the final version of the shell.
 
 ### Pipes
-Pipes are implemented using file descriptors.
+Pipes are implemented using file descriptors. For a command with an unspecified number of pipes, our approach was to firstly tokenize the input_line using ```strtok``` since commands are separated by pipes.
+```C
+command = strtok(cmd, "|");
+```
+After this step, a command may also have a background token which would delimitate two different processes ```echo a & echo b```, so the shell goes through the line and executes each command it encounters immediately (after it has been established that the line is syntactically correct).
 
 ### String parsing
 The shell interprets quotes "" as one meaningful chunk. As such, for inputs such as
@@ -110,7 +114,8 @@ cat < "some file with "inner" quotes" -n
 ```
 will be tokenized into {cat, <, some file with "inner" quotes, -n}.
 This is different than the Linux way of doing it, which would be {cat, <, some file with , inner,  quotes, -n}, however after communication with the T.A.s we've learned that the former is required. Both versions have been implemented and both fail the third test case, and so we think that we might have missed an implementation bug or completely misunderstood the tokenization methodology expected of us for string parsing.
-- [X] Implement background processes. Background processes were possible within the shell by specifying the special character ```&```. They have been removed since improper handling of the background processes resulted in orphan processes. 
+
+Background processes were possible within the shell by specifying the special character ```&```. They have been removed since improper handling of the background processes resulted in orphan processes. 
 ```bash
 xeyes &
 ```
@@ -133,11 +138,7 @@ It was based on four configurations that a command can be in. The program would 
 
 This approach was quickly revamped as the grammar of the shell was made available (the old version can be found on [github](https://github.com/uberVelocity/os-2)).
 
-We found that separating concerns in small functions made the program more modular. This is why we have two separate blocks used for launching a command. One block deals with simple commands without pipes, the other block implements the pipe handling:
-```C
-// Used for executing 
-int launch(char **, char *, char *, int, int, int *, int);
-```
+We found that separating concerns in small functions made the program more modular. This is why we have two separate blocks used for launching a command. One block deals with simple commands without pipes, the other block implements the pipe handling. We decided to split it in this way since it does not make sense to initialize pipe file descriptors when no communication needs to be done. Moreover, it simplified the thought process during the implementation phase of the pipes.
 
 ### Conclusion
 Overall, background processes and disposing of orphans are two features which are not yet supported by our shell. We think that one factor that influenced the development process of the shell is how we interpreted the grammar and the possible inputs that the shell can receive. In most cases we would debug the shell using Bash which, at least in the case of quotes and redirection, handles commands differently. As such, we had arrived at an implementation of a shell that was immitating Bash more-so than anything. After going to the lab on Thursday and clarifying the program's behaviour, major design changes had to be made and unfortunately we couldn't manage to implement every one. The trickiest part of the assignment, in our view, is handling the tokenization and interpreting the input line. We considered using Bison in order to parse the input_line, however none of us had any experience with it and decided against it. 
