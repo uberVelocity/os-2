@@ -129,7 +129,11 @@ xeyes&
 ```
 would have also started a background process.
 ### Extensions
-As far as extensions go we have implemented the following.
+As far as extensions go we have implemented the following. In order to install the readline library run:
+```
+sudo apt-get install libreadline6-dev
+```
+There are two extension programs posted on Themis. One with readline, one without.
 - [X] Retrieve history of commands using up-arrow key (implemented using GNU - readline library).
 - [x] Builtin functions: cd/help/exit.
 - [x] Auto-complete path names with tab (implemented using GNU - readline library.
