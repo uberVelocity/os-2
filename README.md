@@ -40,7 +40,18 @@ The logic is as follows:
 
 ### Background processes
 Background processes are simply regular processes that the shell does not wait for them to exit.
-They were supported
+They were supported at one point during the shell by not waiting for the process to exit, however this proved
+to cause orphan processes. One implementation that might deal with defunct processes is to store the pid of each process in the parent through an array. Knowing how many processes the parent has created, it would know for how many processes it should wait for. Unfortunately, we have not implemented this in the final version of the shell.
+
+### Pipes
+Pipes are implemented using file descriptors.
+
+### String parsing
+The shell interprets quotes "" as one meaningful chunk. As such, for inputs such as
+```bash
+grep "test < a" test
+```
+the shell would transform it into three tokens: {grep, test < a, test}. After communication with the T.A.s it seemed that only the outermost quotes should be used in order to group tokens and that test cases in which an odd number of quotes would be presented would not be used. The shell, for as much as we know, implements the parsing of strings correspondingly even though it does not passes Themis in this scenario.
 
 ### Shell construction
 The shell has three phases.
@@ -54,17 +65,15 @@ The shell implements a dynamically allocated buffer in which it stores the input
 #### Validation of the input_line
 The shell must check for the following scenarios in order for the input_line to pass to the execution phase:
 - The input_line cannot end with a 'special character' apart from &.
-- After every redirection arrow, at least one alpha numerical character must appear to designate the corresponding file.
-- A command may not end with & unless it is the last command in the command_list.
+- After every redirection arrow, at least one alpha numerical character or dot must appear to designate the corresponding file.
 - A command must exist in order for it to be fired.
 - A file may not be used for redirecting both the input and the output.
 
-After every check has passed the shell checks for I/O redirection files and saves the file names of them, if they are present in the input_line in order to set up file descriptors in the execution phase.
+After every check has passed, the shell checks for I/O redirection files and saves the file names of them, if they are present in the input_line in order to set up file descriptors in the execution phase.
 Then, the parser tokenizes the input_line into commands in two stages: first, the command is split separately by the pipe symbol ```|```. Afterwards, each resulting command is stored into an array of separated commands from which each command will fire.
-Any command that has ```&``` will be fired immediately after encountering it, incrementing the number of children of the parent.
+Any command that has ```&``` will be fired immediately after encountering it, incrementing the number of children of the parent (removed).
 #### Execution phase
-After a command is ready for execution the shell checks if it is an empty command: if it is then it returns 1 and waits for the next command,
-otherwise the 
+After a command is ready for execution the shell checks if it is an empty command: if it is then it returns 1 and waits for the next command. Otherwise, it fires the command.
 
 ### Possible inputs
 1. After a "<" or a ">" you expect an input / output file. 
