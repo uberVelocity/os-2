@@ -1,13 +1,23 @@
-## OS - Assignment 2
-### Exercise 1 - Writing a shell
+# OS - Assignment 2
+## Exercise 1 - Writing a shell
+
+### Problem description
+The scope of the assignment was to build a pseudo-linux shell which supports the following:
+- Start a program which can be found in the user's search ($PATH)
+- I/O redirection
+- Background processes
+- Pipes
+- String parsing
+
 #### Set of special characters: {<, >, |, &, "}
+
+### Start a program
+The input line is parsed such that a command is tokenized into its arguments. In order to simulate a shell environment, the shell must be able to receive multiple inputs one after another, and as such the command is executed by a children of the shell. This is done by envoking the ```fork()``` function followed by ```execvp()```. 
+
 ### I/O redirection
-**Redirection only happens between 1 output and 1 input.**
-Redirection should be done in the launch phase of the program
-as in this assignment it is required to have only one potential
-file from which input can be received into the **first** argument
-of the input_line. As such, per input line, only one I/O redirection
-can be present.
+**Redirection only happens between 1 output file and 1 input file.**
+Redirection is handled differently in this assignment than the way it is implemented in Linux.
+There are **at most** two redirection files: an input file and an output file. They lie anywhere in the input_line given by the user. The input redirection should be connected to the first command of the input_line, whilst the output redirection should be connected to the last command of the input_line.
 If a redirection of the form occurs:
 ```bash
 a.out | b.out | c.out < in
@@ -27,6 +37,10 @@ The logic is as follows:
 5. The output of ```b.out``` is given to ```c.out``` as input.
 6. ```c.out``` executes.
 7. The output of ```c.out``` will be written in the ```out``` file.
+
+### Background processes
+Background processes are simply regular processes that the shell does not wait for them to exit.
+They were supported
 
 ### Shell construction
 The shell has three phases.
