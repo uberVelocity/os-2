@@ -1,4 +1,5 @@
 # OS - Assignment 2
+## Authors: Mihai Popescu & Andrei Scurtu
 ## Exercise 1 - Writing a shell
 
 ### Problem description
@@ -90,7 +91,7 @@ B should then be provided as input into A.
 and commandB.
 Pipes and input/output redirection [example #1](http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html), [example #2](https://www.unix.com/programming/122360-c-piping-redirect-operator.html), [example #3](https://www.geeksforgeeks.org/making-linux-shell-c/)
 
-### TODO:
+### Explanations
 - [X] Add special character '"' functionality: Functionality has been added and now commands including quotes are parsed appropriately.
 As an example, consider the command:
 ```bash
@@ -111,24 +112,19 @@ In this scenario, bash uses the quotes to logically group and evaluate the value
 cat some\ file\ that's\ on\ the\ computer
 ```
 This is also supported by the shell as it takes as parameters to the command (```args[0] = cat, args[1] = some file that's on the computer```. Whatever ```cat``` chooses to do with the command (transform it into ```cat some\ file\ that's\ on\ the\ computer```) is up to it.
-- [X] Implement background processes. Background processes are now possible within the shell by specifying the special character ```&```.
+- [X] Implement background processes. Background processes were possible within the shell by specifying the special character ```&```.
 ```bash
 xeyes &
 ```
-is a valid command and will start the process in background (**NEEDS FIXIN'**).
+was a valid command and it would start the process in background
 ```bash
 xeyes&
 ```
 will also start a background process.
-- [ ] Make sure to clean after defunct processes.
-- [ ] When handling I/O, check if file exists before proceeding (leads to errors otherwise). Currently we detect files which are non-existent, but we do not handle them.
-- [X] Execute I/O redirection commands.
-- [X] Parse special characters
-- [x] Execute regular commands
-- [x] Execute regular commands with multiple flags
-- [X] Execute composed commands
-- [X] Execute commands with special characters
-- [x] Implement cd/exit/help (extension)
+### Extensions
+As far as extensions go, we have implemented ```help``` and ```cd```.
+- [X] Retrieve history of commands using up-arrow key using Readline library.
+- [x] Implement cd/help (extension)
 - [x] Auto-complete path names with tab (extension - GNU Readline)
 
 ### Remaining Extensions:
