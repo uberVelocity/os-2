@@ -133,7 +133,7 @@ As far as extensions go we have implemented the following. In order to install t
 ```
 sudo apt-get install libreadline6-dev
 ```
-There are two extension programs posted on Themis. One with readline, one without.
+**There are two versions of the extension program uploaded on Thmeis: one with readline (submission 0), another without (submission 1)**.
 - [X] Retrieve history of commands using up-arrow key (implemented using GNU - readline library).
 - [x] Builtin functions: cd/help/exit.
 - [x] Auto-complete path names with tab (implemented using GNU - readline library.
