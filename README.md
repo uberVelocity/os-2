@@ -83,7 +83,11 @@ After a command is ready for execution the shell checks if it is an empty comman
 The program is able to pass test cases: {1, 4, 5, 6, 8, 10, 12}.
 - Test case 9 passes when pipes are not implemented, indicating that there is some improper validation of a command when pipes are present.
 - We were unable to find test cases for quotation symbols that the program did not dealt with the way it was expected of us.
-- I/O redirection combined seems to work regardless of where one chooses to put the redirection symbols in the command line.
+- I/O redirection combined seems to work regardless of where one chooses to put the redirection symbols in the command line. Globally, there may be only one input file and only one output file.
+```bash
+cat -e > out -n < in 
+```
+would take as command arguments {cat, -e, -n}, input file: {in}, output file{out}.
 - Error checking is done in the validation phase and implements the types of errors described in the assignment.
 - Overall, the program is able to simulate most of the functionality required in the assignment.
 
@@ -141,9 +145,11 @@ This approach was quickly revamped as the grammar of the shell was made availabl
 We found that separating concerns in small functions made the program more modular. This is why we have two separate blocks used for launching a command. One block deals with simple commands without pipes, the other block implements the pipe handling. We decided to split it in this way since it does not make sense to initialize pipe file descriptors when no communication needs to be done. Moreover, it simplified the thought process during the implementation phase of the pipes.
 
 ### Conclusion
-Overall, background processes and disposing of orphans are two features which are not yet supported by our shell. We think that one factor that influenced the development process of the shell is how we interpreted the grammar and the possible inputs that the shell can receive. In most cases we would debug the shell using Bash which, at least in the case of quotes and redirection, handles commands differently. As such, we had arrived at an implementation of a shell that was immitating Bash more-so than anything. After going to the lab on Thursday and clarifying the program's behaviour, major design changes had to be made and unfortunately we couldn't manage to implement every one. The trickiest part of the assignment, in our view, is handling the tokenization and interpreting the input line. We considered using Bison in order to parse the input_line, however none of us had any experience with it and decided against it. 
+Overall, background processes and disposing of orphans are two features which are not yet supported by our shell. We think that one factor that influenced the development process of the shell is how we interpreted the grammar and the possible inputs that the shell can receive. In most cases we would debug the shell using Bash which, at least in the case of quotes and redirection, handles commands differently. As such, we had arrived at an implementation of a shell that was immitating Bash more-so than anything. After going to the lab on Thursday and clarifying the program's behaviour, major design changes had to be made and unfortunately we couldn't manage to implement every one. The trickiest part of the assignment, in our view, is handling the tokenization and interpreting the input line. We considered using Bison in order to parse the input_line, however none of us had any experience with it and decided against it.
+
+The shell feels like a regular shell, especially using the functions provided by the readline library which store the history of non-empty commands and offer auto-completion using a specified key (tab) and after having implemented ```cd``` alongside ```ls```. We would've liked to implement the extension specified in the 'remaining extensions' category, yet unfortunately time does not allow.
 
 ### Remaining Extensions:
-- tab twice to show possibilities
+- tab twice to show possible files
 - provide [emacs shortcuts](https://en.wikipedia.org/wiki/GNU_Readline)
 - change environmental variables using export (can be used to implement [colors](https://www.cyberciti.biz/faq/bash-shell-change-the-color-of-my-shell-prompt-under-linux-or-unix/))
