@@ -62,7 +62,7 @@ int sh_cd(char **args) {
 int sh_help(char **args) {
 	int i;
 	printf("Mihai Popescu's and Alex Scurtu's LSH\n");
-	printf("Type program names and arguments, and hit enter.\n");
+	printf("The shell supports piping, redirection and string parsing.\n");
 	printf("The following are built in:\n");
 	
 	for (i = 0; i < num_builtins(); i++) {
@@ -94,7 +94,7 @@ char *strdup (const char *s) {
 
 void init() {
     printf("\n");
-    printf("*     SHELL - CORP - 1.0      *\n");
+    printf("*     SHELL - OS -  v1.0      *\n");
     printf("*     -------------------     *\n");
     printf("*                             *\n");
     printf("*                             *\n");
@@ -130,7 +130,7 @@ int validInputLine(char **inputLine, char **inputFilename, char **outputFilename
         // Pipe problem
         if (inputLine[i] != NULL && strcmp(inputLine[i], "|") == 0) {
             i++;
-            if (inputLine[i] == NULL || (inputLine[i] != NULL && !isalnum(inputLine[i][0]))) {
+            if (inputLine[i-2] == NULL || inputLine[i] == NULL || (inputLine[i] != NULL && !isalnum(inputLine[i][0]))) {
                 pipeProblem = 1;
             }
         }
@@ -411,6 +411,7 @@ int execute(char **args, char *inputFilename, char *outputFilename, int nthComma
     return launch(args, inputFilename, outputFilename, nthCommand, totalCommands, pipefds, j);
 }
 
+
 void shLoop(void) {
     // init();
     pid_t pid;
@@ -420,8 +421,9 @@ void shLoop(void) {
     char **commands;
     char **executionCommand;
     int *pipefds;
-    int status;
+    int status, isValid = 0;
     int looped = 0;
+    int in, out;
     int numberCommands = 0, i = 0, j = 0;
     // Configure readline to auto-complete paths when the tab key is hit.
     // rl_bind_key('\t', rl_complete);
@@ -440,6 +442,7 @@ void shLoop(void) {
             // printf("Input file :%s\n", inputFilename);
             // printf("Output file :%s\n", outputFilename);
             i = 0;
+            int k = 0;
             commands = splitCommands(line, &numberCommands);
             // Fire single command, do not handle piping.
             if (numberCommands == 1) {
@@ -458,45 +461,66 @@ void shLoop(void) {
             // Handle multiple commands -> pipes!
             else {
                 i = 0;
-                pipefds = calloc(2 * numberCommands, sizeof(int));
-                for (i = 0; i < numberCommands; i++) {
-                    printf("init pipes!\n");
-                    if (pipe(pipefds + i*2) < 0) {
-                        perror("couldn't pipe");
-                        exit(EXIT_FAILURE);
-                    }
+
+                while(commands[i] != NULL) {
+                    isValid = validInputLine(commands, &inputFilename, &outputFilename);
+                    i++;
                 }
-                j = 0;
-                while (commands[i] != NULL) {
-                    pid = fork();
-                    if (pid == 0) {
-                        if (commands[i + 1] != NULL) {
-                            if (dup2(pipefds[j + 1], 1) < 0) {
-                                perror("dup2");
-                                exit(EXIT_FAILURE);
-                            }
-                        }
-                        if (j != 0) {
-                            if(dup2(pipefds[j-2], 0) < 0) {
-                                perror("dup2");
-                                exit(EXIT_FAILURE);
-                            }
-                        }
-                        for (i = 0; i < 2 * numberCommands; i++) {
-                            close(pipefds[i]);
-                        }
-                        if (execvp(commands[0], commands) < 0) {
-                            perror(commands[0]);
+                if (isValid) {
+                    pipefds = calloc(2 * numberCommands, sizeof(int));
+                    for (i = 0; i < numberCommands; i++) {
+                        if (pipe(pipefds + i*2) < 0) {
+                            perror("couldn't pipe");
                             exit(EXIT_FAILURE);
                         }
                     }
-                    else if (pid < 0) {
-                        perror("error");
-                        exit(EXIT_FAILURE);
+                    j = 0;
+                    k = 0;
+                    while (commands[k] != NULL) {
+                        pid = fork();
+                        if (pid == 0) {
+                            if (k == 0) {
+                                if (inputFilename != NULL) {
+                                    in = open(inputFilename, O_RDONLY);
+                                    dup2(in, 0);
+                                    close(in);
+                                }
+                            }
+                            if (k != 0 && commands[k + 1] != NULL) {
+                                if (dup2(pipefds[j + 1], 1) < 0) {
+                                    perror("dup2");
+                                    exit(EXIT_FAILURE);
+                                }
+                            }
+                            if (j != 0) {
+                                if(dup2(pipefds[j-2], 0) < 0) {
+                                    perror("dup2");
+                                    exit(EXIT_FAILURE);
+                                }
+                            }
+                            for (i = 0; i < 2 * numberCommands; i++) {
+                                close(pipefds[i]);
+                            }
+                            args = divideLine(commands[k]);
+                            if (args[0][0] == ' ') {
+                                memmove(&args[0][0], &args[0][1], strlen(args[0]) - 0);
+                            }
+                            executionCommand = removeIO(args);
+                            if (execvp(executionCommand[0], executionCommand) < 0) {
+                                perror(executionCommand[0]);
+                                exit(EXIT_FAILURE);
+                            }
+                        }
+                        else if (pid < 0) {
+                            perror("error");
+                            exit(EXIT_FAILURE);
+                        }
+                        k++;
+                        j+=2;
                     }
-                    i++;
-                    j+=2;
+                    free(pipefds);
                 }
+                
             }
             if (numberCommands > 1) {
                 for (i = 0; i < 2 * numberCommands; i++) {
@@ -522,6 +546,7 @@ void shLoop(void) {
         // Background process has been launched, ignore execution.
         
         // free(pipefds);
+        free(commands);
         free(args);
         free(line);
         MODE = REGULAR;
