@@ -92,7 +92,7 @@ and commandB.
 Pipes and input/output redirection [example #1](http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html), [example #2](https://www.unix.com/programming/122360-c-piping-redirect-operator.html), [example #3](https://www.geeksforgeeks.org/making-linux-shell-c/)
 
 ### Explanations
-- [X] Add special character '"' functionality: Functionality has been added and now commands including quotes are parsed appropriately.
+Functionality has been added and now commands including quotes are parsed appropriately.
 As an example, consider the command:
 ```bash
 echo "some string <> with 'special' characters"
@@ -123,7 +123,7 @@ xeyes&
 will also start a background process.
 ### Extensions
 As far as extensions go, we have implemented ```help``` and ```cd```.
-- [X] Retrieve history of commands using up-arrow key using Readline library.
+- [X] Retrieve history of commands using up-arrow key using readline library. (themis does not have it by default apparently).
 - [x] Implement cd/help (extension)
 - [x] Auto-complete path names with tab (extension - GNU Readline)
 
@@ -131,11 +131,3 @@ As far as extensions go, we have implemented ```help``` and ```cd```.
 - tab twice to show possibilities
 - provide [emacs shortcuts](https://en.wikipedia.org/wiki/GNU_Readline)
 - change environmental variables using export (can be used to implement [colors](https://www.cyberciti.biz/faq/bash-shell-change-the-color-of-my-shell-prompt-under-linux-or-unix/))
-### Notes
-- A potential function that deals with the creation of a file descriptor
-between two processes might be useful since one does not know how many
-file descriptors shall be needed in advance. As such, each operation
-that needs a file descriptor shall create its own dynamically.
-- dup2() used for handling the output / input from a file to a file
-- redirection of input output happens before execute and after fork.
-- useful tutorial https://brennan.io/2015/01/16/write-a-shell-in-c/
