@@ -109,11 +109,8 @@ void x2rectangle() {
 
 
 int validInputLine(char **inputLine, char **inputFilename, char **outputFilename) {
-    // Check for final character being arrow.
-    // Check that after arrow I have a name.
     int ioProblem = 0, i = 0, pipeProblem = 0, sameInOut = 0, backProblem = 0;
     while (inputLine[i] != NULL) {
-        // printf("input/output compare: %s\n", inputLine[i]);
         // Redirect problem
         if (inputLine[i] != NULL && (strcmp(inputLine[i], "<") == 0 || strcmp(inputLine[i], ">") == 0)) {
             i++;
@@ -183,7 +180,6 @@ int launch(char **args, char *inputFilename, char *outputFilename, int nthComman
                     perror(0);
                     exit(EXIT_FAILURE);
                 }
-                // dup2(pipefds[0], STDOUT_FILENO);
                 dup2(in, 0);
                 close(in);
                 
@@ -260,28 +256,22 @@ char **divideLine(char *line) {
         // Detect first and last quotation mark
         i = 0;
         while (line[i] != '"') {
-            // printf("line[%d] = %c\n", i, line[i]);
             i++;
         }
         fqPointer = i;
-        //printf("FIRST = %d\n", fqPointer);
         
         i = strlen(line) - 1;
         while (line[i] != '"') {
             i--;
         }
         lqPointer = i;
-        //printf("LAST = %d\n", lqPointer);
         i = 0, pos = 0;
         // Populate tokens
-        //printf("fqPointer = %d\nlqPointer = %d\n", fqPointer, lqPointer);
         for (i = 0; i < strlen(line); i++) {
             // Out of the largest quotation block
             if (i < fqPointer || i > lqPointer) {
-                //printf("addtotoken: i = %d\n", i);
                 // Spaces indicate arguments
                 if (i != 0 && line[i] == ' ') {
-                    // printf("incrementing POS for i = %d, current pos = %d\n", i, pos);
                     pos++;
                     j = 0;
                     if (pos >= bufSize) {
@@ -296,7 +286,6 @@ char **divideLine(char *line) {
                 // Add character to token at position pos
                 else {
                     if (tokens[pos][j] != 10 && tokens[pos][j] != ' ') {
-                        // printf("!!!tokens[%d][%d] = %c\n", pos, j, line[i]);
                         tokens[pos][j] = line[i];
                         j++;
                     }
@@ -315,7 +304,6 @@ char **divideLine(char *line) {
                 }
             }
             else {
-                // printf("tokens[%d][%d] = %c\n", pos, j, line[i]);
                 if (i != fqPointer && i != lqPointer) {
                     if (tokens[pos][j] != 10) {
                         tokens[pos][j] = line[i];
@@ -334,7 +322,6 @@ char **divideLine(char *line) {
         pos = 0;
         while (token != NULL) {
             tokens[pos] = token;
-            // printf("tokens[%d] = %s\n", pos, tokens[pos]);
             pos++;
             if (pos >= bufSize) {
                 bufSize += TOK_BUFSIZE;
@@ -358,10 +345,8 @@ char **splitCommands(char *line, int *numberCommands) {
     char *delimiter = strtok(line, "|");
     int i = 0;
     while (delimiter != NULL) {
-        // printf("DELIMITER = %s\n", delimiter);
         commands[i] = delimiter;
         delimiter = strtok(NULL, "|");
-        // printf("commands[%d] = %s\n", i, commands[i]);
         i++;
     }
     *numberCommands = i;
@@ -371,10 +356,6 @@ char **splitCommands(char *line, int *numberCommands) {
 char **removeIO(char **args) {
     char **newArgs = calloc(TOK_BUFSIZE, sizeof(char*));
     int i = 0, j = 0;
-    // while (args[i] != NULL) {
-    //     printf("A:%s\n", args[i]);
-    //     i++;
-    // }
     i = 0;
     while (args[i] != NULL) {
         if (strcmp(args[i], "<") == 0 || strcmp(args[i], ">") == 0) {
@@ -387,10 +368,6 @@ char **removeIO(char **args) {
         i++;
     }
     i = 0;
-    // while (newArgs[i] != NULL) {
-    //     printf("NA:%s\n", newArgs[i]);
-    //     i++;
-    // }
     return newArgs;
 }
 
@@ -413,7 +390,7 @@ int execute(char **args, char *inputFilename, char *outputFilename, int nthComma
 
 
 void shLoop(void) {
-    // init();
+    init();
     pid_t pid;
     char *line, *cpline;
     char **sepArgs; // Arguments separated by pipe symbol '|'.
@@ -433,14 +410,11 @@ void shLoop(void) {
         line = NULL;
         args = NULL;
         // Read input from user.
+        printf("> ");
         line = readLine();
-        // printf("LINE =:%s:\n", line);
         line[strlen(line) - 1] = 0;
-        // printf("LINE AFTER=:%s:\n", line);
         cpline = strdup(line);  // Needed to validify the input without changing it.
         if (validInputLine(divideLine(cpline), &inputFilename, &outputFilename)) {
-            // printf("Input file :%s\n", inputFilename);
-            // printf("Output file :%s\n", outputFilename);
             i = 0;
             int k = 0;
             commands = splitCommands(line, &numberCommands);
@@ -532,20 +506,6 @@ void shLoop(void) {
                 }
             }
         }
-        // Divide input into separate commands.
-        
-        // Use up arrow to retrieve command from history.
-        // if (line && *line) {
-        //     add_history(line);
-        // }
-        // int i = 0;
-        // while (args[i] != NULL) {
-        //     printf("token[%d] = %s\n", i, args[i]);
-        //     i++;
-        // }
-        // Background process has been launched, ignore execution.
-        
-        // free(pipefds);
         free(commands);
         free(args);
         free(line);
