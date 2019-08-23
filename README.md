@@ -1,4 +1,4 @@
-# Linux shell
+# Linux terminal emulator
 ## Writing a shell
 
 ### Problem description
