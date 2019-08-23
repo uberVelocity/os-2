@@ -1,6 +1,5 @@
-# OS - Assignment 2
-## Authors: Mihai Popescu & Andrei Scurtu
-## Exercise 1 - Writing a shell
+# Linux shell
+## Writing a shell
 
 ### Problem description
 The scope of the assignment was to build a pseudo-linux shell which supports the following:
